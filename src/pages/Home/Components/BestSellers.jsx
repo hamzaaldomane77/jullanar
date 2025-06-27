@@ -1,0 +1,272 @@
+import React from 'react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Autoplay } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+
+const BestSellers = () => {
+  const products = [
+    {
+      id: 1,
+      name: "محول كهربائي متنقل",
+      price: 50,
+      location: "عمران",
+      status: "متاح",
+      discount: 50,
+      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
+      label: "جديد"
+    },
+    {
+      id: 2,
+      name: "محول طاقة",
+      price: 75,
+      location: "صنعاء",
+      status: "متاح",
+      discount: 30,
+      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
+      label: "حصري"
+    },
+    {
+      id: 3,
+      name: "شاحن محمول",
+      price: 60,
+      location: "عدن",
+      status: "متاح",
+      discount: 40,
+      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
+      label: "موصى به"
+    },
+    {
+      id: 4,
+      name: "محول USB",
+      price: 45,
+      location: "تعز",
+      status: "متاح",
+      discount: 25,
+      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
+      label: "الأكثر مبيعاً"
+    },
+    {
+      id: 5,
+      name: "شاحن لاسلكي",
+      price: 85,
+      location: "صنعاء",
+      status: "متاح",
+      discount: 35,
+      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
+      label: "جديد"
+    },
+    {
+      id: 6,
+      name: "محول سيارة",
+      price: 55,
+      location: "ذمار",
+      status: "متاح",
+      discount: 20,
+      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
+      label: "حصري"
+    },
+    {
+      id: 7,
+      name: "شاحن سريع",
+      price: 95,
+      location: "إب",
+      status: "متاح",
+      discount: 45,
+      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
+      label: "موصى به"
+    },
+    {
+      id: 8,
+      name: "محول عالمي",
+      price: 70,
+      location: "الحديدة",
+      status: "متاح",
+      discount: 30,
+      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
+      label: "الأكثر مبيعاً"
+    }
+  ];
+
+  return (
+    <section className="py-16 bg-[#e5e5e5] overflow-hidden">
+      <div className="container mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center mb-4 text-[#a00000]">
+          الأكثر مبيعاً
+        </h2>
+        <div className="w-40 h-0.5 bg-[#7C0000] mx-auto mb-8"></div>
+        <div className="relative group">
+          <style>
+            {`
+              .custom-navigation {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 100%;
+                pointer-events: none;
+                z-index: 10;
+              }
+
+              .custom-prev,
+              .custom-next {
+                position: absolute;
+                width: 45px !important;
+                height: 45px !important;
+                background-color: #363636;
+                border-radius: 50%;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                pointer-events: auto;
+              }
+
+              .custom-prev {
+                right: -60px;
+              }
+
+              .custom-next {
+                left: -60px;
+              }
+
+              .custom-prev:hover,
+              .custom-next:hover {
+                background-color: #a00000;
+                transform: scale(1.1);
+              }
+
+              .custom-prev svg,
+              .custom-next svg {
+                width: 24px;
+                height: 24px;
+                fill: white;
+              }
+
+              .custom-prev:disabled,
+              .custom-next:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                pointer-events: none;
+              }
+
+              @media (max-width: 1280px) {
+                .custom-prev {
+                  right: -20px;
+                }
+                .custom-next {
+                  left: -20px;
+                }
+              }
+
+              @media (max-width: 640px) {
+                .custom-prev,
+                .custom-next {
+                  width: 35px !important;
+                  height: 35px !important;
+                }
+
+                .custom-prev svg,
+                .custom-next svg {
+                  width: 20px;
+                  height: 20px;
+                }
+              }
+            `}
+          </style>
+
+          <div className="max-w-[90%] mx-auto relative">
+            <Swiper
+              modules={[Navigation, Autoplay]}
+              spaceBetween={24}
+              slidesPerView={1}
+              navigation={{
+                prevEl: '.custom-prev',
+                nextEl: '.custom-next'
+              }}
+              autoplay={{
+                delay: 3000,
+                disableOnInteraction: false,
+                pauseOnMouseEnter: true
+              }}
+              speed={800}
+              loop={true}
+              breakpoints={{
+                640: {
+                  slidesPerView: 2,
+                },
+                768: {
+                  slidesPerView: 3,
+                },
+                1024: {
+                  slidesPerView: 4,
+                },
+              }}
+              dir="rtl"
+            >
+              {products.map((product) => (
+                <SwiperSlide key={product.id}>
+                  <div className="bg-white rounded-xl shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div className="relative">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-48 object-cover"
+                      />
+                      {/* Discount Badge */}
+                      <div className="absolute top-4 left-4 bg-[#a00000] text-white px-2 py-1 rounded-md font-bold">
+                        {product.discount}%
+                      </div>
+                      {/* Blue Label */}
+                      <div className="absolute bottom-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm">
+                        {product.label}
+                      </div>
+                    </div>
+
+                    <div className="p-4">
+                      <h3 className="text-lg font-bold text-[#2b2b2b] mb-2">
+                        {product.name}
+                      </h3>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[#a00000] font-bold text-xl">
+                          ${product.price}
+                        </span>
+                        <span className="text-gray-600 text-sm">
+                          {product.location}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-green-600 font-medium">
+                          {product.status}
+                        </span>
+                        <button className="bg-[#2b2b2b] text-white px-4 py-1 rounded-md text-sm hover:bg-[#a00000] transition-colors duration-300">
+                          اشتري الآن
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+
+            <div className="custom-navigation">
+              <button className="custom-prev" aria-label="السابق">
+                <svg viewBox="0 0 24 24">
+                  <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+                </svg>
+              </button>
+              <button className="custom-next" aria-label="التالي">
+                <svg viewBox="0 0 24 24">
+                  <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default BestSellers; 

@@ -1,0 +1,80 @@
+.brand-logos-container {
+  width: 100%;
+padding-top: 10px;
+padding-bottom: 20px;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.brand-logos-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  
+}
+
+.brand-logos-title {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.8rem;
+  color: #333;
+}
+
+.brand-logos-swiper {
+  padding: 1rem;
+  margin: 0 -1rem;
+}
+
+.brand-logo {
+  aspect-ratio: 1;
+  padding: 1.5rem;
+
+ 
+ 
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+}
+
+.brand-logo:active {
+  cursor: grabbing;
+}
+
+.brand-logo:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.brand-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  max-width: 120px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Responsive Design */
+@media (max-width: 767px) {
+  .brand-logos-container {
+    padding: 1rem 0;
+  }
+
+  .brand-logos-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .brand-logo {
+    padding: 0.75rem;
+  }
+
+  .brand-logo img {
+    max-width: 70px;
+  }
+
+  .brand-logos-swiper {
+    padding: 0.5rem;
+  }
+}
