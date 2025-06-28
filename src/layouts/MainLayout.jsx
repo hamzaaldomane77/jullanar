@@ -54,12 +54,13 @@ const MainLayout = () => {
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-600 transition-all duration-200 group-hover:w-full"></span>
               </Link>
               <Link 
-                to="/contact" 
+                to="/categories" 
                 className="text-gray-700 hover:text-red-600 font-medium transition-colors duration-200 relative group"
               >
-                اتصل بنا
+                الأصناف
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-600 transition-all duration-200 group-hover:w-full"></span>
               </Link>
+             
               <Link 
                 to="/order-tracking" 
                 className="text-gray-700 hover:text-red-600 font-medium transition-colors duration-200 relative group"
@@ -69,25 +70,10 @@ const MainLayout = () => {
               </Link>
             </nav>
 
-            {/* Search Bar & Actions */}
+            {/* Header Actions */}
             <div className="flex items-center space-x-4 rtl:space-x-reverse">
-              {/* Search Bar - Desktop */}
-              <div className="hidden md:block relative">
-                <input
-                  type="search"
-                  placeholder="ابحث عن منتج..."
-                  className="w-64 py-2 px-4 pr-10 rounded-full border-2 border-gray-200 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all duration-200"
-                />
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="h-5 w-5 absolute right-3 top-2.5 text-gray-400" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
+              {/* Phone Number - Desktop */}
+          
 
               {/* Cart Icon */}
               <button 
@@ -123,23 +109,13 @@ const MainLayout = () => {
           {/* Mobile Menu */}
           <div className={`lg:hidden transition-all duration-300 ease-in-out ${isMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
             <div className="py-4 border-t border-gray-200">
-              {/* Mobile Search */}
-              <div className="mb-4 px-2">
-                <div className="relative">
-                  <input
-                    type="search"
-                    placeholder="ابحث عن منتج..."
-                    className="w-full py-2 px-4 pr-10 rounded-full border-2 border-gray-200 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
-                  />
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className="h-5 w-5 absolute right-3 top-2.5 text-gray-400" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              {/* Mobile Phone Number */}
+              <div className="mb-4 px-4">
+                <div className="flex items-center justify-center bg-red-50 rounded-lg p-3">
+                  <svg className="w-5 h-5 ml-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
+                  <span className="font-medium text-gray-800">0983596774</span>
                 </div>
               </div>
 
@@ -182,15 +158,15 @@ const MainLayout = () => {
                   </div>
                 </Link>
                 <Link 
-                  to="/contact" 
+                  to="/categories" 
                   className="block px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <div className="flex items-center">
                     <svg className="w-5 h-5 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
-                    اتصل بنا
+                    الأصناف
                   </div>
                 </Link>
                 <Link 
@@ -248,15 +224,14 @@ const MainLayout = () => {
               <p className="mb-4">متجرك الأول للتسوق الإلكتروني</p>
             </div>
 
-            {/* Categories */}
+            {/* Quick Links */}
             <div className="text-center sm:text-right">
-              <h3 className="text-xl font-bold mb-4 text-white">الأصناف</h3>
+              <h3 className="text-xl font-bold mb-4 text-white">روابط سريعة</h3>
               <ul className="space-y-2">
-                <li><Link to="/category/clothing" className="hover:text-white transition-colors">ألبسة</Link></li>
-                <li><Link to="/category/shoes" className="hover:text-white transition-colors">أحذية</Link></li>
-                <li><Link to="/category/furniture" className="hover:text-white transition-colors">أثاث</Link></li>
-                <li><Link to="/category/appliances" className="hover:text-white transition-colors">كهربائيات</Link></li>
-                <li><Link to="/category/electronics" className="hover:text-white transition-colors">إلكترونيات</Link></li>
+                <li><Link to="/categories" className="hover:text-white transition-colors">جميع الأصناف</Link></li>
+                <li><Link to="/brands" className="hover:text-white transition-colors">الماركات</Link></li>
+                <li><Link to="/products" className="hover:text-white transition-colors">المنتجات</Link></li>
+                <li><Link to="/order-tracking" className="hover:text-white transition-colors">تتبع الطلب</Link></li>
               </ul>
             </div>
 
@@ -279,7 +254,7 @@ const MainLayout = () => {
                   <svg className="h-5 w-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
-                  0999999999
+                  0983596774
                 </p>
                 <p className="flex items-center justify-center sm:justify-start">
                   <svg className="h-5 w-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

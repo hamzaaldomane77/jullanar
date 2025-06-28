@@ -14,7 +14,6 @@ export const fetchProducts = async () => {
   
   // Strategy 1: Try direct fetch first
   try {
-    console.log('Attempting direct fetch from API...');
     const response = await fetch(targetUrl, {
       method: 'GET',
       mode: 'cors',
@@ -26,19 +25,16 @@ export const fetchProducts = async () => {
 
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ Direct fetch successful:', data);
       return data.data;
     }
   } catch (error) {
-    console.warn('❌ Direct fetch failed:', error.message);
+    // Continue to next strategy
   }
 
   // Strategy 2: Try with different CORS proxies
   for (let i = 0; i < CORS_PROXIES.length; i++) {
     const proxy = CORS_PROXIES[i];
     try {
-      console.log(`Attempting with CORS proxy ${i + 1}:`, proxy);
-      
       let proxyUrl;
       if (proxy.includes('allorigins.win')) {
         proxyUrl = `${proxy}${encodeURIComponent(targetUrl)}`;
@@ -55,14 +51,12 @@ export const fetchProducts = async () => {
 
       if (response.ok) {
         let data = await response.json();
-        console.log(`✅ CORS proxy ${i + 1} successful:`, data);
         
         // Handle allorigins.win response format (sometimes returns string)
         if (typeof data === 'string') {
           try {
             data = JSON.parse(data);
           } catch (parseError) {
-            console.warn('Failed to parse string response:', parseError);
             continue;
           }
         }
@@ -81,38 +75,33 @@ export const fetchProducts = async () => {
         }
       }
     } catch (error) {
-      console.warn(`❌ CORS proxy ${i + 1} failed:`, error.message);
+      // Continue to next strategy
     }
   }
 
   // Strategy 3: Try using JSONP-like approach with script tag
   try {
-    console.log('Attempting JSONP-like approach...');
     const jsonpData = await fetchWithJSONP(targetUrl);
     if (jsonpData && jsonpData.data) {
-      console.log('✅ JSONP approach successful:', jsonpData);
       return jsonpData.data;
     }
   } catch (error) {
-    console.warn('❌ JSONP approach failed:', error.message);
+    // Continue to next strategy
   }
 
   // Strategy 4: Try XMLHttpRequest (sometimes works when fetch doesn't)
   try {
-    console.log('Attempting with XMLHttpRequest...');
     const xhrData = await fetchWithXHR(targetUrl);
     if (xhrData && xhrData.data) {
-      console.log('✅ XMLHttpRequest successful:', xhrData);
       return xhrData.data;
     }
   } catch (error) {
-    console.warn('❌ XMLHttpRequest failed:', error.message);
+    // Continue to next strategy
   }
 
   // Strategy 5: Use Vite proxy (development only)
   if (import.meta.env.DEV) {
     try {
-      console.log('Attempting with Vite proxy...');
       const response = await fetch('/api/products', {
         method: 'GET',
         headers: {
@@ -123,11 +112,10 @@ export const fetchProducts = async () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Vite proxy successful:', data);
         return data.data;
       }
     } catch (error) {
-      console.warn('❌ Vite proxy failed:', error.message);
+      // Continue to error
     }
   }
 
@@ -334,7 +322,68 @@ export const findProductBySlug = (products, slug) => {
 
 // Order submission function
 export const submitOrder = async (orderData) => {
-  const apiUrl = 'https://backend.jullanar.shop/api/v1/orders';
+  // Use proxy in development, direct URL in production
+  const apiUrl = import.meta.env.DEV 
+    ? '/api/orders'  // Uses Vite proxy
+    : 'https://backend.jullanar.shop/api/v1/orders';
+  
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Origin': window.location.origin,
+      },
+      mode: 'cors',
+      credentials: 'same-origin',
+      body: JSON.stringify(orderData)
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      
+      // Validate the response structure
+      if (result && result.data) {
+        return result;
+      } else {
+        throw new Error('استجابة غير صالحة من الخادم');
+      }
+    } else {
+      // Try to get error details
+      let errorMessage = `HTTP ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch (parseError) {
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
+      }
+      
+      throw new Error(`خطأ في الخادم: ${errorMessage}`);
+    }
+  } catch (error) {
+    // Provide more detailed error message based on error type
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('فشل في الاتصال بالخادم. تحقق من اتصال الإنترنت.');
+    } else if (error.message.includes('CORS')) {
+      throw new Error('مشكلة في إعدادات الخادم (CORS). تواصل مع المطور.');
+    } else {
+      throw new Error(`خطأ في الإرسال: ${error.message}`);
+    }
+  }
+};
+
+// Order tracking function
+export const trackOrder = async (orderNumber, phone) => {
+  // Use proxy in development, direct URL in production
+  const apiUrl = import.meta.env.DEV 
+    ? '/api/orders/track'  // Uses Vite proxy
+    : 'https://backend.jullanar.shop/api/v1/orders/track';
+  const requestData = {
+    number: orderNumber,
+    phone: phone
+  };
   
   try {
     // Direct fetch attempt
@@ -344,80 +393,228 @@ export const submitOrder = async (orderData) => {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify(orderData)
+      body: JSON.stringify(requestData)
     });
 
     if (response.ok) {
-      return await response.json();
+      const result = await response.json();
+      return result;
     } else {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to submit order');
+      throw new Error(errorData.message || 'لم يتم العثور على الطلب');
     }
   } catch (error) {
-    console.warn('Direct order submission failed, trying CORS proxy...');
-    
     try {
       // Try with CORS proxy
       const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(apiUrl);
-      const response = await fetch(proxyUrl, {
+      const proxyResponse = await fetch(proxyUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: JSON.stringify(orderData)
+        body: JSON.stringify(requestData)
       });
-
-      if (response.ok) {
-        return await response.json();
+      
+      if (proxyResponse.ok) {
+        const result = await proxyResponse.json();
+        return result;
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to submit order');
+        const errorData = await proxyResponse.json();
+        throw new Error(errorData.message || 'لم يتم العثور على الطلب');
       }
     } catch (proxyError) {
-      console.error('Order submission failed with proxy:', proxyError);
-      throw new Error('Network error. Please try again.');
+      throw new Error('خطأ في الشبكة. يرجى المحاولة مرة أخرى.');
     }
   }
 };
 
-// Order tracking function
-export const trackOrder = async (orderNumber) => {
-  const apiUrl = `https://backend.jullanar.shop/api/v1/orders/track?number=${encodeURIComponent(orderNumber)}`;
+// Function to fetch brands using multiple strategies
+export const fetchBrands = async () => {
+  const targetUrl = `${API_BASE_URL}/brands`;
   
+  // Strategy 1: Try direct fetch first
   try {
-    // Direct fetch attempt
-    const response = await fetch(apiUrl, {
+    const response = await fetch(targetUrl, {
       method: 'GET',
+      mode: 'cors',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-      }
+      },
     });
 
     if (response.ok) {
-      return await response.json();
-    } else {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Order not found');
+      const data = await response.json();
+      return data.data;
     }
   } catch (error) {
-    console.warn('Direct order tracking failed, trying CORS proxy...');
-    
+    // Continue to next strategy
+  }
+
+  // Strategy 2: Try with different CORS proxies
+  for (let i = 0; i < CORS_PROXIES.length; i++) {
+    const proxy = CORS_PROXIES[i];
     try {
-      // Try with CORS proxy
-      const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(apiUrl);
-      const proxyResponse = await fetch(proxyUrl);
-      const proxyData = await proxyResponse.json();
-      
-      if (proxyData.status.http_code === 200) {
-        return JSON.parse(proxyData.contents);
+      let proxyUrl;
+      if (proxy.includes('allorigins.win')) {
+        proxyUrl = `${proxy}${encodeURIComponent(targetUrl)}`;
       } else {
-        throw new Error('Order not found');
+        proxyUrl = `${proxy}${targetUrl}`;
       }
-    } catch (proxyError) {
-      console.error('Order tracking failed with proxy:', proxyError);
-      throw new Error('Network error. Please try again.');
+      
+      const response = await fetch(proxyUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        let data = await response.json();
+        
+        // Handle allorigins.win response format (sometimes returns string)
+        if (typeof data === 'string') {
+          try {
+            data = JSON.parse(data);
+          } catch (parseError) {
+            continue;
+          }
+        }
+        
+        // Handle different proxy response formats
+        if (data && data.data && Array.isArray(data.data)) {
+          return data.data;
+        } else if (Array.isArray(data)) {
+          return data;
+        } else if (data && typeof data === 'object') {
+          // If it's an object but not the expected format, try to find the brands array
+          const possibleArrays = Object.values(data).filter(val => Array.isArray(val));
+          if (possibleArrays.length > 0) {
+            return possibleArrays[0];
+          }
+        }
+      }
+    } catch (error) {
+      // Continue to next strategy
     }
   }
+
+  // Strategy 3: Use Vite proxy (development only)
+  if (import.meta.env.DEV) {
+    try {
+      const response = await fetch('/api/brands', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.data;
+      }
+    } catch (error) {
+      // Continue to error
+    }
+  }
+
+  // If all strategies fail, throw error
+  throw new Error('فشل في تحميل العلامات التجارية من جميع المصادر. تحقق من إعدادات CORS على الخادم.');
+};
+
+// Function to fetch categories using multiple strategies
+export const fetchCategories = async () => {
+  const targetUrl = `${API_BASE_URL}/categories`;
+  
+  // Strategy 1: Try direct fetch first
+  try {
+    const response = await fetch(targetUrl, {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.data;
+    }
+  } catch (error) {
+    // Continue to next strategy
+  }
+
+  // Strategy 2: Try with different CORS proxies
+  for (let i = 0; i < CORS_PROXIES.length; i++) {
+    const proxy = CORS_PROXIES[i];
+    try {
+      let proxyUrl;
+      if (proxy.includes('allorigins.win')) {
+        proxyUrl = `${proxy}${encodeURIComponent(targetUrl)}`;
+      } else {
+        proxyUrl = `${proxy}${targetUrl}`;
+      }
+      
+      const response = await fetch(proxyUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        let data = await response.json();
+        
+        // Handle allorigins.win response format (sometimes returns string)
+        if (typeof data === 'string') {
+          try {
+            data = JSON.parse(data);
+          } catch (parseError) {
+            continue;
+          }
+        }
+        
+        // Handle different proxy response formats
+        if (data && data.data && Array.isArray(data.data)) {
+          return data.data;
+        } else if (Array.isArray(data)) {
+          return data;
+        } else if (data && typeof data === 'object') {
+          // If it's an object but not the expected format, try to find the categories array
+          const possibleArrays = Object.values(data).filter(val => Array.isArray(val));
+          if (possibleArrays.length > 0) {
+            return possibleArrays[0];
+          }
+        }
+      }
+    } catch (error) {
+      // Continue to next strategy
+    }
+  }
+
+  // Strategy 3: Use Vite proxy (development only)
+  if (import.meta.env.DEV) {
+    try {
+      const response = await fetch('/api/categories', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.data;
+      }
+    } catch (error) {
+      // Continue to error
+    }
+  }
+
+  // If all strategies fail, throw error
+  throw new Error('فشل في تحميل الأصناف من جميع المصادر. تحقق من إعدادات CORS على الخادم.');
 }; 

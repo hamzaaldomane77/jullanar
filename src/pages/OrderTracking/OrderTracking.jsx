@@ -1,23 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { trackOrder } from '../../services/api';
 
 const OrderTracking = () => {
   const location = useLocation();
   const [orderNumber, setOrderNumber] = useState(location.state?.orderNumber || '');
+  const [phone, setPhone] = useState(location.state?.phone || '');
   const [orderData, setOrderData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Track order when component mounts if order number is provided
+  // Track order when component mounts if order number and phone are provided
   useEffect(() => {
-    if (orderNumber) {
-      trackOrder();
+    if (orderNumber && phone) {
+      handleTrackOrder();
     }
   }, []);
 
-  const trackOrder = async () => {
+  const handleTrackOrder = async () => {
     if (!orderNumber.trim()) {
       setError('يرجى إدخال رقم الطلب');
+      return;
+    }
+
+    if (!phone.trim()) {
+      setError('يرجى إدخال رقم الهاتف');
       return;
     }
 
@@ -26,54 +33,12 @@ const OrderTracking = () => {
       setError('');
       setOrderData(null);
 
-      console.log('Tracking order:', orderNumber);
-
-      // Try multiple strategies for API call
-      let response;
-      const apiUrl = `https://backend.jullanar.shop/api/v1/orders/track?number=${encodeURIComponent(orderNumber)}`;
-
-      try {
-        // Direct fetch attempt
-        response = await fetch(apiUrl, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          }
-        });
-      } catch (error) {
-        console.warn('Direct fetch failed, trying CORS proxy...');
-        
-        // Try with CORS proxy
-        const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(apiUrl);
-        const proxyResponse = await fetch(proxyUrl);
-        const proxyData = await proxyResponse.json();
-        
-        if (proxyData.status.http_code === 200) {
-          const responseData = JSON.parse(proxyData.contents);
-          console.log('Order tracking result (proxy):', responseData);
-          console.log('Status object (proxy):', responseData.data?.status);
-          setOrderData(responseData.data);
-          setLoading(false);
-          return;
-        } else {
-          throw new Error('Failed to fetch through proxy');
-        }
-      }
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Order tracking result:', result);
-        console.log('Status object:', result.data?.status);
-        setOrderData(result.data);
-      } else {
-        const errorData = await response.json();
-        console.error('Order tracking failed:', errorData);
-        setError(errorData.message || 'لم يتم العثور على الطلب');
-      }
+      // Use the API service function
+      const result = await trackOrder(orderNumber, phone);
+      
+      setOrderData(result.data);
     } catch (error) {
-      console.error('Error tracking order:', error);
-      setError('حدث خطأ أثناء البحث عن الطلب. يرجى المحاولة مرة أخرى.');
+      setError(error.message || 'حدث خطأ أثناء البحث عن الطلب. يرجى المحاولة مرة أخرى.');
     } finally {
       setLoading(false);
     }
@@ -81,7 +46,7 @@ const OrderTracking = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    trackOrder();
+    handleTrackOrder();
   };
 
   const getStatusColor = (statusObject) => {
@@ -149,6 +114,20 @@ const OrderTracking = () => {
                 onChange={(e) => setOrderNumber(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="مثال: OR-164799"
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                رقم الهاتف
+              </label>
+              <input
+                type="text"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="مثال: 0999999999"
                 required
               />
             </div>

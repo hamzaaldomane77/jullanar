@@ -4,17 +4,23 @@ import { Toaster } from 'react-hot-toast';
 import MainLayout from './layouts/MainLayout';
 import { CartProvider } from './contexts/CartContext';
 import Loading from './components/Loading';
+import ScrollToTop from './components/ScrollToTop';
+
+
 
 import Home from './pages/Home/Home';
 import Brands from './pages/Brands/Brands';
 import BrandPage from './pages/Brands/BrandPage';
+import Categories from './pages/Categories/Categories';
+import CategoryPage from './pages/Categories/CategoryPage';
 import Products from './pages/Products/Products';
 import ProductDetail from './pages/Products/ProductDetail';
-import Contact from './pages/Contact/Contact';
+
 
 import Cart from './pages/Cart/Cart';
 import Checkout from './pages/Checkout/Checkout';
 import OrderTracking from './pages/OrderTracking/OrderTracking';
+import OrderSuccess from './pages/OrderSuccess/OrderSuccess';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -31,6 +37,7 @@ function App() {
   return (
     <CartProvider>
       <Router>
+        <ScrollToTop />
         <Toaster />
         {isLoading ? (
           <Loading />
@@ -42,10 +49,13 @@ function App() {
               <Route path="products/:slug" element={<ProductDetail />} />
               <Route path="cart" element={<Cart />} />
               <Route path="checkout" element={<Checkout />} />
+              <Route path="order-success" element={<OrderSuccess />} />
               <Route path="order-tracking" element={<OrderTracking />} />
               <Route path="brands" element={<Brands />} />
               <Route path="brands/:brandSlug" element={<BrandPage />} />
-              <Route path="contact" element={<Contact />} />
+              <Route path="categories" element={<Categories />} />
+              <Route path="categories/:slug" element={<CategoryPage />} />
+              
              
               
               {/* صفحة 404 للمسارات غير الموجودة */}

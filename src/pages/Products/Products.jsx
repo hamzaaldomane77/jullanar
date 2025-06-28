@@ -40,19 +40,15 @@ const Products = () => {
       setLoading(true);
       setError(null);
       
-      console.log('Loading products...');
       const products = await fetchProducts();
-      console.log('Products loaded:', products);
       
       setAllProducts(products);
       
       // Extract unique categories
       const uniqueCategories = getUniqueCategories(products);
-      console.log('Unique categories:', uniqueCategories);
       setCategories(uniqueCategories);
       
     } catch (err) {
-      console.error('Error loading products:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -60,22 +56,17 @@ const Products = () => {
   };
 
   const applyFiltersAndPagination = () => {
-    console.log('Applying filters:', filters);
-    
     // Filter products
     const filteredProducts = filterProducts(allProducts, filters);
-    console.log('Filtered products:', filteredProducts);
     
     // Paginate filtered products
     const paginatedResult = paginateProducts(filteredProducts, filters.page, filters.perPage);
-    console.log('Paginated result:', paginatedResult);
     
     setDisplayedProducts(paginatedResult.data);
     setPagination(paginatedResult.pagination);
   };
 
   const handleFilterChange = (newFilters) => {
-    console.log('Filter changed:', newFilters);
     setFilters({ ...newFilters, page: 1 }); // Reset to first page when filters change
   };
 

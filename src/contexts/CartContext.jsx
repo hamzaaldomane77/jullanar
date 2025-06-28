@@ -89,7 +89,7 @@ export const CartProvider = ({ children }) => {
         const cartData = JSON.parse(savedCart);
         dispatch({ type: CART_ACTIONS.LOAD_CART, payload: cartData });
       } catch (error) {
-        console.error('Error loading cart from localStorage:', error);
+        // Ignore localStorage parsing errors
       }
     }
   }, []);

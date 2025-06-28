@@ -37,7 +37,8 @@
 - **العلامات التجارية**: صفحات مخصصة لكل علامة تجارية
 - **السلة**: عرض المنتجات المختارة وإدارتها
 - **تأكيد الطلب**: نموذج إرسال الطلب
-- **تتبع الطلب**: متابعة حالة الطلب
+- **نجاح الطلب**: عرض تفاصيل الطلب بعد الإرسال
+- **تتبع الطلب**: متابعة حالة الطلب برقم الطلب والهاتف
 - **اتصل بنا**: معلومات التواصل
 
 ## التقنيات المستخدمة
@@ -52,8 +53,47 @@
 ## API Integration
 
 يتكامل الموقع مع APIs التالية:
-- `POST https://backend.jullanar.shop/api/v1/orders` - إرسال الطلبات
-- `GET https://backend.jullanar.shop/api/v1/orders/track` - تتبع الطلبات
+
+### إرسال الطلبات
+- **Endpoint**: `POST https://backend.jullanar.shop/api/v1/orders`
+- **البيانات المطلوبة**:
+```json
+{
+  "customer_first_name": "محمود",
+  "customer_father_name": "سمير",
+  "customer_last_name": "أيوب", 
+  "customer_phone": "0999999999",
+  "city": "صحنايا",
+  "street": "الباسل",
+  "address": "مساكن الاشرفية",
+  "notes": "ممكن يكون فاضي",
+  "items": [
+    {
+      "shop_product_id": 1,
+      "qty": 2
+    }
+  ]
+}
+```
+
+### تتبع الطلبات
+- **Endpoint**: `POST https://backend.jullanar.shop/api/v1/orders/track`
+- **البيانات المطلوبة**:
+```json
+{
+  "number": "OR-164799",
+  "phone": "0999999999"
+}
+```
+
+### اختبار APIs
+يمكنك اختبار APIs باستخدام:
+```javascript
+// في console المتصفح
+window.testApi.runApiTests(); // تشغيل جميع الاختبارات
+window.testApi.testSubmitOrder(); // اختبار إرسال طلب
+window.testApi.testTrackOrder("OR-164799", "0999999999"); // اختبار تتبع طلب
+```
 
 ## التثبيت والتشغيل
 
@@ -80,6 +120,7 @@ src/
 │   ├── Products/       # صفحات المنتجات
 │   ├── Cart/           # سلة التسوق
 │   ├── Checkout/       # تأكيد الطلب
+│   ├── OrderSuccess/   # نجاح الطلب
 │   └── OrderTracking/  # تتبع الطلبات
 ├── services/           # خدمات API
 └── assets/             # الصور والملفات الثابتة

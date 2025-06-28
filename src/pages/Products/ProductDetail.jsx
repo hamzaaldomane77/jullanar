@@ -45,7 +45,6 @@ const ProductDetail = () => {
       
       setProduct(mockProduct);
     } catch (err) {
-      console.error('Error loading product:', err);
       setError('فشل في تحميل المنتج');
     } finally {
       setLoading(false);
@@ -75,7 +74,7 @@ const ProductDetail = () => {
 
   const handleBuyNow = () => {
     addToCart(product, quantity);
-    toast.success('تم إضافة المنتج إلى السلة وتحويلك للدفع', {
+    toast.success('حالة الانتقال الى صفحة اتمام الطلب', {
       duration: 2000,
       position: 'top-center',
       style: {
