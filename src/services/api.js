@@ -617,4 +617,194 @@ export const fetchCategories = async () => {
 
   // If all strategies fail, throw error
   throw new Error('فشل في تحميل الأصناف من جميع المصادر. تحقق من إعدادات CORS على الخادم.');
+};
+
+// Function to fetch featured products using multiple strategies
+export const fetchFeaturedProducts = async () => {
+  const targetUrl = `${API_BASE_URL}/featured-products`;
+  
+  // Strategy 1: Try direct fetch first
+  try {
+    const response = await fetch(targetUrl, {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.data;
+    }
+  } catch (error) {
+    // Continue to next strategy
+  }
+
+  // Strategy 2: Try with different CORS proxies
+  for (let i = 0; i < CORS_PROXIES.length; i++) {
+    const proxy = CORS_PROXIES[i];
+    try {
+      let proxyUrl;
+      if (proxy.includes('allorigins.win')) {
+        proxyUrl = `${proxy}${encodeURIComponent(targetUrl)}`;
+      } else {
+        proxyUrl = `${proxy}${targetUrl}`;
+      }
+      
+      const response = await fetch(proxyUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        let data = await response.json();
+        
+        // Handle allorigins.win response format (sometimes returns string)
+        if (typeof data === 'string') {
+          try {
+            data = JSON.parse(data);
+          } catch (parseError) {
+            continue;
+          }
+        }
+        
+        // Handle different proxy response formats
+        if (data && data.data && Array.isArray(data.data)) {
+          return data.data;
+        } else if (Array.isArray(data)) {
+          return data;
+        } else if (data && typeof data === 'object') {
+          // If it's an object but not the expected format, try to find the products array
+          const possibleArrays = Object.values(data).filter(val => Array.isArray(val));
+          if (possibleArrays.length > 0) {
+            return possibleArrays[0];
+          }
+        }
+      }
+    } catch (error) {
+      // Continue to next strategy
+    }
+  }
+
+  // Strategy 3: Use Vite proxy (development only)
+  if (import.meta.env.DEV) {
+    try {
+      const response = await fetch('/api/featured-products', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.data;
+      }
+    } catch (error) {
+      // Continue to error
+    }
+  }
+
+  // If all strategies fail, throw error
+  throw new Error('فشل في تحميل المنتجات المميزة من جميع المصادر. تحقق من إعدادات CORS على الخادم.');
+};
+
+// Function to fetch offers products using multiple strategies
+export const fetchOffersProducts = async () => {
+  const targetUrl = `${API_BASE_URL}/offers-products`;
+  
+  // Strategy 1: Try direct fetch first
+  try {
+    const response = await fetch(targetUrl, {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.data;
+    }
+  } catch (error) {
+    // Continue to next strategy
+  }
+
+  // Strategy 2: Try with different CORS proxies
+  for (let i = 0; i < CORS_PROXIES.length; i++) {
+    const proxy = CORS_PROXIES[i];
+    try {
+      let proxyUrl;
+      if (proxy.includes('allorigins.win')) {
+        proxyUrl = `${proxy}${encodeURIComponent(targetUrl)}`;
+      } else {
+        proxyUrl = `${proxy}${targetUrl}`;
+      }
+      
+      const response = await fetch(proxyUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        let data = await response.json();
+        
+        // Handle allorigins.win response format (sometimes returns string)
+        if (typeof data === 'string') {
+          try {
+            data = JSON.parse(data);
+          } catch (parseError) {
+            continue;
+          }
+        }
+        
+        // Handle different proxy response formats
+        if (data && data.data && Array.isArray(data.data)) {
+          return data.data;
+        } else if (Array.isArray(data)) {
+          return data;
+        } else if (data && typeof data === 'object') {
+          // If it's an object but not the expected format, try to find the products array
+          const possibleArrays = Object.values(data).filter(val => Array.isArray(val));
+          if (possibleArrays.length > 0) {
+            return possibleArrays[0];
+          }
+        }
+      }
+    } catch (error) {
+      // Continue to next strategy
+    }
+  }
+
+  // Strategy 3: Use Vite proxy (development only)
+  if (import.meta.env.DEV) {
+    try {
+      const response = await fetch('/api/offers-products', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.data;
+      }
+    } catch (error) {
+      // Continue to error
+    }
+  }
+
+  // If all strategies fail, throw error
+  throw new Error('فشل في تحميل منتجات العروض من جميع المصادر. تحقق من إعدادات CORS على الخادم.');
 }; 

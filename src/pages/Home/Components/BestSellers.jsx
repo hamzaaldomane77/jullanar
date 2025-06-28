@@ -1,92 +1,117 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
+import { fetchFeaturedProducts } from '../../../services/api';
+import { useCart } from '../../../contexts/CartContext';
+import toast from 'react-hot-toast';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
 const BestSellers = () => {
-  const products = [
-    {
-      id: 1,
-      name: "محول كهربائي متنقل",
-      price: 50,
-      location: "عمران",
-      status: "متاح",
-      discount: 50,
-      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
-      label: "جديد"
-    },
-    {
-      id: 2,
-      name: "محول طاقة",
-      price: 75,
-      location: "صنعاء",
-      status: "متاح",
-      discount: 30,
-      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
-      label: "حصري"
-    },
-    {
-      id: 3,
-      name: "شاحن محمول",
-      price: 60,
-      location: "عدن",
-      status: "متاح",
-      discount: 40,
-      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
-      label: "موصى به"
-    },
-    {
-      id: 4,
-      name: "محول USB",
-      price: 45,
-      location: "تعز",
-      status: "متاح",
-      discount: 25,
-      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
-      label: "الأكثر مبيعاً"
-    },
-    {
-      id: 5,
-      name: "شاحن لاسلكي",
-      price: 85,
-      location: "صنعاء",
-      status: "متاح",
-      discount: 35,
-      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
-      label: "جديد"
-    },
-    {
-      id: 6,
-      name: "محول سيارة",
-      price: 55,
-      location: "ذمار",
-      status: "متاح",
-      discount: 20,
-      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
-      label: "حصري"
-    },
-    {
-      id: 7,
-      name: "شاحن سريع",
-      price: 95,
-      location: "إب",
-      status: "متاح",
-      discount: 45,
-      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
-      label: "موصى به"
-    },
-    {
-      id: 8,
-      name: "محول عالمي",
-      price: 70,
-      location: "الحديدة",
-      status: "متاح",
-      discount: 30,
-      image: "https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800",
-      label: "الأكثر مبيعاً"
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { addToCart } = useCart();
+
+  useEffect(() => {
+    const loadFeaturedProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const featuredData = await fetchFeaturedProducts();
+        setProducts(featuredData);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFeaturedProducts();
+  }, []);
+
+  const handleAddToCart = (product, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      price: parseFloat(product.price),
+      image: product.images && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800',
+      quantity: 1
+    };
+    
+    addToCart(cartItem);
+    toast.success(`تم إضافة ${product.name} إلى السلة`);
+  };
+
+  const calculateDiscountPercentage = (price, oldPrice) => {
+    if (!oldPrice || oldPrice === "0.00" || parseFloat(oldPrice) <= parseFloat(price)) {
+      return 0;
     }
-  ];
+    const discount = ((parseFloat(oldPrice) - parseFloat(price)) / parseFloat(oldPrice)) * 100;
+    return Math.round(discount);
+  };
+
+  if (loading) {
+    return (
+      <section className="py-16 bg-[#e5e5e5] overflow-hidden">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-4 text-[#a00000]">الأكثر مبيعاً</h2>
+          <div className="w-40 h-0.5 bg-[#7C0000] mx-auto mb-8"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[90%] mx-auto">
+            {[...Array(4)].map((_, index) => (
+              <div key={index} className="bg-white rounded-xl shadow-md overflow-hidden animate-pulse">
+                <div className="w-full h-48 bg-gray-200"></div>
+                <div className="p-4">
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-16 bg-[#e5e5e5] overflow-hidden">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-4 text-[#a00000]">الأكثر مبيعاً</h2>
+          <div className="w-40 h-0.5 bg-[#7C0000] mx-auto mb-8"></div>
+          <div className="text-center py-8">
+            <p className="text-red-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+            >
+              إعادة المحاولة
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <section className="py-16 bg-[#e5e5e5] overflow-hidden">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-4 text-[#a00000]">الأكثر مبيعاً</h2>
+          <div className="w-40 h-0.5 bg-[#7C0000] mx-auto mb-8"></div>
+          <div className="text-center py-8">
+            <p className="text-gray-600">لا توجد منتجات مميزة متوفرة حالياً</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-16 bg-[#e5e5e5] overflow-hidden">
@@ -205,49 +230,68 @@ const BestSellers = () => {
               }}
               dir="rtl"
             >
-              {products.map((product) => (
-                <SwiperSlide key={product.id}>
-                  <div className="bg-white rounded-xl shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:-translate-y-1">
-                    <div className="relative">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-48 object-cover"
-                      />
-                      {/* Discount Badge */}
-                      <div className="absolute top-4 left-4 bg-[#a00000] text-white px-2 py-1 rounded-md font-bold">
-                        {product.discount}%
-                      </div>
-                      {/* Blue Label */}
-                      <div className="absolute bottom-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm">
-                        {product.label}
-                      </div>
-                    </div>
+              {products.map((product) => {
+                const discountPercentage = calculateDiscountPercentage(product.price, product.old_price);
+                const productImage = product.images && product.images.length > 0 ? product.images[0] : 'https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800';
+                
+                return (
+                  <SwiperSlide key={product.id}>
+                    <Link to={`/products/${product.slug}`} className="block">
+                      <div className="bg-white rounded-xl shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:-translate-y-1">
+                        <div className="relative">
+                          <img
+                            src={productImage}
+                            alt={product.name}
+                            className="w-full h-48 object-cover"
+                            onError={(e) => {
+                              e.target.src = 'https://images.unsplash.com/photo-1633114128174-2f8aa49759b0?w=800';
+                            }}
+                          />
+                          {/* Discount Badge */}
+                          {discountPercentage > 0 && (
+                            <div className="absolute top-4 left-4 bg-[#a00000] text-white px-2 py-1 rounded-md font-bold">
+                              {discountPercentage}%
+                            </div>
+                          )}
+                          {/* Featured Label */}
+                          {product.featured && (
+                            <div className="absolute bottom-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm">
+                              مميز
+                            </div>
+                          )}
+                        </div>
 
-                    <div className="p-4">
-                      <h3 className="text-lg font-bold text-[#2b2b2b] mb-2">
-                        {product.name}
-                      </h3>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-[#a00000] font-bold text-xl">
-                          ${product.price}
-                        </span>
-                        <span className="text-gray-600 text-sm">
-                          {product.location}
-                        </span>
+                        <div className="p-4">
+                          <h3 className="text-lg font-bold text-[#2b2b2b] mb-2 line-clamp-2">
+                            {product.name}
+                          </h3>
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex flex-col">
+                              <span className="text-[#a00000] font-bold text-lg">
+                                {parseFloat(product.price).toLocaleString()} ل.س
+                              </span>
+                              {product.old_price && product.old_price !== "0.00" && (
+                                <span className="text-gray-500 text-sm line-through">
+                                  {parseFloat(product.old_price).toLocaleString()} ل.س
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-gray-600 text-sm">
+                              {product.brand}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-green-600 font-medium text-sm">
+                              متوفر
+                            </span>
+                          
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-green-600 font-medium">
-                          {product.status}
-                        </span>
-                        <button className="bg-[#2b2b2b] text-white px-4 py-1 rounded-md text-sm hover:bg-[#a00000] transition-colors duration-300">
-                          اشتري الآن
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </SwiperSlide>
-              ))}
+                    </Link>
+                  </SwiperSlide>
+                );
+              })}
             </Swiper>
 
             <div className="custom-navigation">
