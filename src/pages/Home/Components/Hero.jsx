@@ -1,5 +1,6 @@
 import React from 'react';
 import Homepage from '../../../assets/homepage.jpg';
+import { Link } from 'react-router-dom';
 
 
 
@@ -25,12 +26,17 @@ export default function Hero() {
           نقدم لكم أفضل الخدمات والمنتجات بجودة عالية
         </p>
         <div className="flex flex-wrap justify-center gap-6">
-          <button className="bg-white text-blue-900 hover:bg-blue-100 px-12 py-4 rounded-lg font-bold text-xl transition-all duration-300 transform hover:scale-105">
-          اكتشف أكثر
-          </button>
-          <button className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-900 px-12 py-4 rounded-lg font-bold text-xl transition-all duration-300 transform hover:scale-105">
-          المزيد
-          </button>
+          <Link to="/products">
+            <button className="bg-white text-blue-900 hover:bg-blue-100 px-12 py-4 rounded-lg font-bold text-xl transition-all duration-300 transform hover:scale-105">
+              اكتشف أكثر
+            </button>
+          </Link>
+         
+          <Link to="/order-tracking">
+            <button className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-900 px-12 py-4 rounded-lg font-bold text-xl transition-all duration-300 transform hover:scale-105">
+              متابعة الطلب
+            </button>
+          </Link>
         </div>
       </div>
     </div>

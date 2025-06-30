@@ -59,12 +59,12 @@ const Offers = () => {
   if (loading) {
     return (
       <section className="py-16 bg-[#e5e5e5] overflow-hidden">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto ">
           <h2 className="text-3xl font-bold text-center mb-12 text-[#a00000]">العروض</h2>
           <div className="text-center text-[#585D60] mx-auto mb-8">استكشف معنا اهم العروض المتوفرة في متجرنا</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[90%] mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 py-12 my-12 max-w-[90%] mx-auto">
             {[...Array(4)].map((_, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-md overflow-hidden animate-pulse">
+              <div key={index} className="bg-white rounded-xl shadow-md z-20 relative overflow-hidden animate-pulse">
                 <div className="w-full h-48 bg-gray-200"></div>
                 <div className="p-4">
                   <div className="h-4 bg-gray-200 rounded mb-2"></div>

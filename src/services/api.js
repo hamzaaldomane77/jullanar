@@ -353,23 +353,45 @@ export const submitOrder = async (orderData) => {
       // Try to get error details
       let errorMessage = `HTTP ${response.status}`;
       try {
-        const errorData = await response.json();
-        errorMessage = errorData.message || errorData.error || errorMessage;
-      } catch (parseError) {
-        const errorText = await response.text();
-        errorMessage = errorText || errorMessage;
+        // First try to read as text, then parse as JSON
+        const responseText = await response.text();
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (jsonParseError) {
+          // If it's not JSON, use the text as is
+          errorMessage = responseText || errorMessage;
+        }
+      } catch (readError) {
+        // If we can't read the response at all, use the HTTP status
+        errorMessage = `HTTP ${response.status}`;
       }
       
       throw new Error(`خطأ في الخادم: ${errorMessage}`);
     }
   } catch (error) {
+    console.error('Order submission error:', error);
+    
     // Provide more detailed error message based on error type
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error('فشل في الاتصال بالخادم. تحقق من اتصال الإنترنت.');
+    if (error.name === 'TypeError') {
+      if (error.message.includes('fetch')) {
+        throw new Error('فشل في الاتصال بالخادم. تحقق من اتصال الإنترنت.');
+      } else if (error.message.includes('NetworkError')) {
+        throw new Error('خطأ في الشبكة. يرجى المحاولة مرة أخرى.');
+      } else {
+        throw new Error('خطأ في الشبكة. تحقق من الاتصال.');
+      }
     } else if (error.message.includes('CORS')) {
       throw new Error('مشكلة في إعدادات الخادم (CORS). تواصل مع المطور.');
+    } else if (error.message.includes('body stream already read')) {
+      throw new Error('خطأ في معالجة الاستجابة. يرجى المحاولة مرة أخرى.');
+    } else if (error.message.includes('خطأ في الخادم')) {
+      // Already a server error, re-throw as is
+      throw error;
     } else {
-      throw new Error(`خطأ في الإرسال: ${error.message}`);
+      // Log the original error for debugging
+      console.error('Unexpected error:', error);
+      throw new Error(`خطأ غير متوقع: ${error.message || 'خطأ في إرسال الطلب'}`);
     }
   }
 };
@@ -400,8 +422,17 @@ export const trackOrder = async (orderNumber, phone) => {
       const result = await response.json();
       return result;
     } else {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'لم يتم العثور على الطلب');
+      try {
+        const responseText = await response.text();
+        try {
+          const errorData = JSON.parse(responseText);
+          throw new Error(errorData.message || 'لم يتم العثور على الطلب');
+        } catch (jsonParseError) {
+          throw new Error(responseText || 'لم يتم العثور على الطلب');
+        }
+      } catch (readError) {
+        throw new Error('لم يتم العثور على الطلب');
+      }
     }
   } catch (error) {
     try {
@@ -420,8 +451,17 @@ export const trackOrder = async (orderNumber, phone) => {
         const result = await proxyResponse.json();
         return result;
       } else {
-        const errorData = await proxyResponse.json();
-        throw new Error(errorData.message || 'لم يتم العثور على الطلب');
+        try {
+          const responseText = await proxyResponse.text();
+          try {
+            const errorData = JSON.parse(responseText);
+            throw new Error(errorData.message || 'لم يتم العثور على الطلب');
+          } catch (jsonParseError) {
+            throw new Error(responseText || 'لم يتم العثور على الطلب');
+          }
+        } catch (readError) {
+          throw new Error('لم يتم العثور على الطلب');
+        }
       }
     } catch (proxyError) {
       throw new Error('خطأ في الشبكة. يرجى المحاولة مرة أخرى.');

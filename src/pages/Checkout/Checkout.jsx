@@ -19,17 +19,31 @@ const Checkout = () => {
     customer_last_name: '',
     customer_phone: '',
     city: '',
+    governorate: '',
     street: '',
     address: '',
     notes: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  // Syrian cities
-  const syriaCities = [
-    'دمشق', 'حلب', 'حمص', 'حماة', 'اللاذقية', 'دير الزور', 'الرقة', 'درعا', 
-    'السويداء', 'القنيطرة', 'طرطوس', 'إدلب', 'الحسكة', 'ريف دمشق'
+  // Syrian governorates
+  const syriaGovernorates = [
+    { id: '1', name: 'دمشق' },
+    { id: '2', name: 'ريف دمشق' },
+    { id: '3', name: 'حلب' },
+    { id: '4', name: 'حمص' },
+    { id: '5', name: 'حماة' },
+    { id: '6', name: 'اللاذقية' },
+    { id: '7', name: 'طرطوس' },
+    { id: '8', name: 'إدلب' },
+    { id: '9', name: 'دير الزور' },
+    { id: '10', name: 'الرقة' },
+    { id: '11', name: 'درعا' },
+    { id: '12', name: 'السويداء' },
+    { id: '13', name: 'القنيطرة' },
+    { id: '14', name: 'الحسكة' }
   ];
 
   const handleInputChange = (e) => {
@@ -38,9 +52,71 @@ const Checkout = () => {
       ...prev,
       [name]: value
     }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  // Validation function
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Check required fields
+    if (!formData.customer_first_name.trim()) {
+      newErrors.customer_first_name = 'الاسم الأول مطلوب';
+    }
+
+    if (!formData.customer_father_name.trim()) {
+      newErrors.customer_father_name = 'اسم الأب مطلوب';
+    }
+
+    if (!formData.customer_last_name.trim()) {
+      newErrors.customer_last_name = 'الكنية مطلوبة';
+    }
+
+    if (!formData.customer_phone.trim()) {
+      newErrors.customer_phone = 'رقم الهاتف مطلوب';
+    } else if (!/^[0-9+\-\s()]{10,15}$/.test(formData.customer_phone.trim())) {
+      newErrors.customer_phone = 'رقم الهاتف غير صالح';
+    }
+
+    if (!formData.city.trim()) {
+      newErrors.city = 'المدينة مطلوبة';
+    }
+
+    if (!formData.governorate) {
+      newErrors.governorate = 'المحافظة مطلوبة';
+    }
+
+    if (!formData.street.trim()) {
+      newErrors.street = 'اسم الشارع مطلوب';
+    }
+
+    if (!formData.address.trim()) {
+      newErrors.address = 'العنوان التفصيلي مطلوب';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmitOrder = async () => {
+    // Validate form before submission
+    if (!validateForm()) {
+      // Scroll to first error field
+      const firstErrorField = document.querySelector('.border-red-500');
+      if (firstErrorField) {
+        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstErrorField.focus();
+      }
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
@@ -57,6 +133,7 @@ const Checkout = () => {
         customer_last_name: formData.customer_last_name,
         customer_phone: formData.customer_phone,
         city: formData.city,
+        governorate: formData.governorate,
         street: formData.street,
         address: formData.address,
         notes: formData.notes || '',
@@ -139,9 +216,17 @@ const Checkout = () => {
                       name="customer_first_name"
                       value={formData.customer_first_name}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                        errors.customer_first_name 
+                          ? 'border-red-500 focus:ring-red-500' 
+                          : 'border-gray-300 focus:ring-blue-500'
+                      }`}
                       placeholder="أدخل الاسم الأول"
+                      required
                     />
+                    {errors.customer_first_name && (
+                      <p className="mt-1 text-sm text-red-600">{errors.customer_first_name}</p>
+                    )}
                   </div>
 
                   <div>
@@ -153,9 +238,17 @@ const Checkout = () => {
                       name="customer_father_name"
                       value={formData.customer_father_name}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                        errors.customer_father_name 
+                          ? 'border-red-500 focus:ring-red-500' 
+                          : 'border-gray-300 focus:ring-blue-500'
+                      }`}
                       placeholder="أدخل اسم الأب"
+                      required
                     />
+                    {errors.customer_father_name && (
+                      <p className="mt-1 text-sm text-red-600">{errors.customer_father_name}</p>
+                    )}
                   </div>
 
                   <div>
@@ -167,9 +260,17 @@ const Checkout = () => {
                       name="customer_last_name"
                       value={formData.customer_last_name}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                        errors.customer_last_name 
+                          ? 'border-red-500 focus:ring-red-500' 
+                          : 'border-gray-300 focus:ring-blue-500'
+                      }`}
                       placeholder="أدخل الكنية"
+                      required
                     />
+                    {errors.customer_last_name && (
+                      <p className="mt-1 text-sm text-red-600">{errors.customer_last_name}</p>
+                    )}
                   </div>
                 </div>
 
@@ -182,9 +283,17 @@ const Checkout = () => {
                     name="customer_phone"
                     value={formData.customer_phone}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                      errors.customer_phone 
+                        ? 'border-red-500 focus:ring-red-500' 
+                        : 'border-gray-300 focus:ring-blue-500'
+                    }`}
                     placeholder="مثال: 0999999999"
+                    required
                   />
+                  {errors.customer_phone && (
+                    <p className="mt-1 text-sm text-red-600">{errors.customer_phone}</p>
+                  )}
                 </div>
 
                 {/* Address Information */}
@@ -193,17 +302,47 @@ const Checkout = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       المدينة *
                     </label>
-                    <select
+                    <input
+                      type="text"
                       name="city"
                       value={formData.city}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                        errors.city 
+                          ? 'border-red-500 focus:ring-red-500' 
+                          : 'border-gray-300 focus:ring-blue-500'
+                      }`}
+                      placeholder="أدخل اسم المدينة"
+                      required
+                    />
+                    {errors.city && (
+                      <p className="mt-1 text-sm text-red-600">{errors.city}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      المحافظة *
+                    </label>
+                    <select
+                      name="governorate"
+                      value={formData.governorate}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                        errors.governorate 
+                          ? 'border-red-500 focus:ring-red-500' 
+                          : 'border-gray-300 focus:ring-blue-500'
+                      }`}
+                      required
                     >
-                      <option value="">اختر المدينة</option>
-                      {syriaCities.map(city => (
-                        <option key={city} value={city}>{city}</option>
+                      <option value="">اختر المحافظة</option>
+                      {syriaGovernorates.map(governorate => (
+                        <option key={governorate.id} value={governorate.id}>{governorate.name}</option>
                       ))}
                     </select>
+                    {errors.governorate && (
+                      <p className="mt-1 text-sm text-red-600">{errors.governorate}</p>
+                    )}
                   </div>
 
                   <div>
@@ -215,9 +354,17 @@ const Checkout = () => {
                       name="street"
                       value={formData.street}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                        errors.street 
+                          ? 'border-red-500 focus:ring-red-500' 
+                          : 'border-gray-300 focus:ring-blue-500'
+                      }`}
                       placeholder="أدخل اسم الشارع"
+                      required
                     />
+                    {errors.street && (
+                      <p className="mt-1 text-sm text-red-600">{errors.street}</p>
+                    )}
                   </div>
                 </div>
 
@@ -230,14 +377,22 @@ const Checkout = () => {
                     value={formData.address}
                     onChange={handleInputChange}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                      errors.address 
+                        ? 'border-red-500 focus:ring-red-500' 
+                        : 'border-gray-300 focus:ring-blue-500'
+                    }`}
                     placeholder="أدخل العنوان التفصيلي (رقم البناء، الطابق، إلخ)"
+                    required
                   />
+                  {errors.address && (
+                    <p className="mt-1 text-sm text-red-600">{errors.address}</p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ملاحظات إضافية
+                    ملاحظات إضافية (اختياري)
                   </label>
                   <textarea
                     name="notes"
@@ -293,6 +448,20 @@ const Checkout = () => {
                   <span className="text-[#7C0000]">{formatPrice(getCartTotal())}</span>
                 </div>
               </div>
+
+              {/* Validation Error Message */}
+              {Object.keys(errors).length > 0 && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 text-red-500 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-sm text-red-700 font-medium">
+                      يرجى ملء جميع الحقول المطلوبة بشكل صحيح قبل إرسال الطلب
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Submit Button */}
               <div className="space-y-3">
