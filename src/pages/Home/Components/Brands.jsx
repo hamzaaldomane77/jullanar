@@ -145,22 +145,35 @@ const Brands = () => {
 
         {/* Mobile Layout */}
         <div className="lg:hidden">
+          {brands.length > 0 && (
           <Swiper
+            key={`brands-swiper-${brands.length}`}
             modules={[Grid, Autoplay, EffectFade]}
             grid={{
               rows: 2,
-              fill: true
+              fill: 'row'
             }}
             spaceBetween={16}
             slidesPerView={2}
-            autoplay={{
+            autoplay={brands.length > 4 ? {
               delay: 2000,
               disableOnInteraction: false,
               pauseOnMouseEnter: true,
-            }}
+            } : false}
             speed={800}
             className="h-[400px]"
             loop={brands.length > 4}
+            watchOverflow={true}
+            observer={true}
+            observeParents={true}
+            onSwiper={(swiper) => {
+              // Ensure swiper is properly initialized
+              if (swiper && brands.length > 0) {
+                setTimeout(() => {
+                  swiper.update();
+                }, 100);
+              }
+            }}
           >
             {brands.map((brand) => (
               <SwiperSlide key={brand.id}>
@@ -193,6 +206,7 @@ const Brands = () => {
               </SwiperSlide>
             ))}
           </Swiper>
+          )}
         </div>
 
         {/* View All Brands Button */}

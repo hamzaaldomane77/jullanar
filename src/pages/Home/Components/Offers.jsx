@@ -99,14 +99,28 @@ const Offers = () => {
     );
   }
 
-  if (products.length === 0) {
+  if (loading) {
     return (
-      <section className="py-16 bg-[#e5e5e5] overflow-hidden">
+      <section className="py-16 bg-white overflow-hidden">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12 text-[#a00000]">العروض</h2>
+          <div className="text-center text-[#585D60] mx-auto mb-8">استكشف معنا اهم العروض المتوفرة في متجرنا</div>
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#a00000]"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error || products.length === 0) {
+    return (
+      <section className="py-16 bg-white overflow-hidden">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12 text-[#a00000]">العروض</h2>
           <div className="text-center text-[#585D60] mx-auto mb-8">استكشف معنا اهم العروض المتوفرة في متجرنا</div>
           <div className="text-center py-8">
-            <p className="text-gray-600">لا توجد عروض متوفرة حالياً</p>
+            <p className="text-gray-600">{error || "لا توجد عروض متوفرة حالياً"}</p>
           </div>
         </div>
       </section>
@@ -203,20 +217,22 @@ const Offers = () => {
 
           <div className="max-w-[90%] mx-auto relative">
             <Swiper
+              key={`offers-swiper-${products.length}`}
               modules={[Navigation, Autoplay]}
               spaceBetween={24}
               slidesPerView={1}
               navigation={{
                 prevEl: '.offers-prev',
-                nextEl: '.offers-next'
+                nextEl: '.offers-next',
+                enabled: products.length > 0
               }}
-              autoplay={{
+              autoplay={products.length > 4 ? {
                 delay: 3000,
                 disableOnInteraction: false,
                 pauseOnMouseEnter: true
-              }}
+              } : false}
               speed={800}
-              loop={true}
+              loop={products.length > 4}
               breakpoints={{
                 640: {
                   slidesPerView: 2,
@@ -229,6 +245,17 @@ const Offers = () => {
                 },
               }}
               dir="rtl"
+              watchOverflow={true}
+              observer={true}
+              observeParents={true}
+              onSwiper={(swiper) => {
+                // Ensure swiper is properly initialized
+                if (swiper && products.length > 0) {
+                  setTimeout(() => {
+                    swiper.update();
+                  }, 100);
+                }
+              }}
             >
               {products.map((product) => {
                 const discountPercentage = calculateDiscountPercentage(product.price, product.old_price);
