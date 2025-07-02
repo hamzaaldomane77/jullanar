@@ -322,78 +322,182 @@ export const findProductBySlug = (products, slug) => {
 
 // Order submission function
 export const submitOrder = async (orderData) => {
-  // Use proxy in development, direct URL in production
-  const apiUrl = import.meta.env.DEV 
-    ? '/api/v1/orders'  // Uses Vite proxy
-    : 'https://backend.jullanar.shop/api/v1/orders';
+  console.log('Submitting order with data:', orderData);
   
-  try {
-    const response = await fetch(apiUrl, {
-      method: 'POST',
+  const directUrl = 'https://backend.jullanar.shop/api/v1/orders';
+  const proxyUrl = '/api/v1/orders';
+  
+  // Try multiple strategies for better mobile support
+  const strategies = [
+    // Strategy 1: Use proxy in development, direct in production
+    {
+      url: import.meta.env.DEV ? proxyUrl : directUrl,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Origin': window.location.origin,
       },
       mode: 'cors',
-      credentials: 'same-origin',
-      body: JSON.stringify(orderData)
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      
-      // Validate the response structure
-      if (result && result.data) {
-        return result;
-      } else {
-        throw new Error('استجابة غير صالحة من الخادم');
-      }
-    } else {
-      // Try to get error details
-      let errorMessage = `HTTP ${response.status}`;
-      try {
-        // First try to read as text, then parse as JSON
-        const responseText = await response.text();
-        try {
-          const errorData = JSON.parse(responseText);
-          errorMessage = errorData.message || errorData.error || errorMessage;
-        } catch (jsonParseError) {
-          // If it's not JSON, use the text as is
-          errorMessage = responseText || errorMessage;
-        }
-      } catch (readError) {
-        // If we can't read the response at all, use the HTTP status
-        errorMessage = `HTTP ${response.status}`;
-      }
-      
-      throw new Error(`خطأ في الخادم: ${errorMessage}`);
+      credentials: 'same-origin'
+    },
+    // Strategy 2: Direct call with minimal headers (better for mobile)
+    {
+      url: directUrl,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      mode: 'cors'
+    },
+    // Strategy 3: Direct call with no-cors mode (last resort)
+    {
+      url: directUrl,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      mode: 'no-cors'
     }
-  } catch (error) {
-    console.error('Order submission error:', error);
+  ];
+
+  for (let i = 0; i < strategies.length; i++) {
+    const strategy = strategies[i];
+    console.log(`Trying strategy ${i + 1}:`, strategy.url);
     
-    // Provide more detailed error message based on error type
-    if (error.name === 'TypeError') {
-      if (error.message.includes('fetch')) {
-        throw new Error('فشل في الاتصال بالخادم. تحقق من اتصال الإنترنت.');
-      } else if (error.message.includes('NetworkError')) {
-        throw new Error('خطأ في الشبكة. يرجى المحاولة مرة أخرى.');
-      } else {
-        throw new Error('خطأ في الشبكة. تحقق من الاتصال.');
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      const response = await fetch(strategy.url, {
+        method: 'POST',
+        headers: strategy.headers,
+        mode: strategy.mode,
+        credentials: strategy.credentials,
+        body: JSON.stringify(orderData),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+      console.log(`Strategy ${i + 1} response:`, response.status, response.statusText);
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Order submission successful:', result);
+        
+        // Validate the response structure
+        if (result && result.data) {
+          return result;
+        } else {
+          throw new Error('استجابة غير صالحة من الخادم');
+        }
+      } else if (response.status !== 0) { // Skip no-cors responses with status 0
+        // Try to get error details
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const responseText = await response.text();
+          try {
+            const errorData = JSON.parse(responseText);
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch (jsonParseError) {
+            errorMessage = responseText || errorMessage;
+          }
+        } catch (readError) {
+          errorMessage = `HTTP ${response.status}`;
+        }
+        
+        console.error(`Strategy ${i + 1} failed:`, errorMessage);
+        
+        // If this is not the last strategy, continue to next
+        if (i < strategies.length - 1) {
+          continue;
+        } else {
+          throw new Error(`خطأ في الخادم: ${errorMessage}`);
+        }
       }
-    } else if (error.message.includes('CORS')) {
-      throw new Error('مشكلة في إعدادات الخادم (CORS). تواصل مع المطور.');
-    } else if (error.message.includes('body stream already read')) {
-      throw new Error('خطأ في معالجة الاستجابة. يرجى المحاولة مرة أخرى.');
-    } else if (error.message.includes('خطأ في الخادم')) {
-      // Already a server error, re-throw as is
-      throw error;
-    } else {
-      // Log the original error for debugging
-      console.error('Unexpected error:', error);
-      throw new Error(`خطأ غير متوقع: ${error.message || 'خطأ في إرسال الطلب'}`);
+    } catch (error) {
+      console.error(`Strategy ${i + 1} error:`, error);
+      
+      // If this is the last strategy, throw the error
+      if (i === strategies.length - 1) {
+        // Provide more detailed error message based on error type
+        if (error.name === 'AbortError') {
+          throw new Error('انتهت مهلة الاتصال. يرجى المحاولة مرة أخرى.');
+        } else if (error.name === 'TypeError') {
+          if (error.message.includes('fetch')) {
+            throw new Error('فشل في الاتصال بالخادم. تحقق من اتصال الإنترنت.');
+          } else if (error.message.includes('NetworkError')) {
+            throw new Error('خطأ في الشبكة. يرجى المحاولة مرة أخرى.');
+          } else {
+            throw new Error('خطأ في الشبكة. تحقق من الاتصال.');
+          }
+        } else if (error.message.includes('CORS')) {
+          throw new Error('مشكلة في إعدادات الخادم (CORS). تواصل مع المطور.');
+        } else if (error.message.includes('body stream already read')) {
+          throw new Error('خطأ في معالجة الاستجابة. يرجى المحاولة مرة أخرى.');
+        } else if (error.message.includes('خطأ في الخادم')) {
+          throw error;
+        } else {
+          console.error('Unexpected error:', error);
+          throw new Error(`خطأ غير متوقع: ${error.message || 'خطأ في إرسال الطلب'}`);
+        }
+      }
+      // Continue to next strategy
     }
   }
+  
+  // If all fetch strategies failed, try XMLHttpRequest as final fallback
+  console.log('All fetch strategies failed, trying XMLHttpRequest fallback');
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', directUrl, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('Accept', 'application/json');
+    xhr.timeout = 30000; // 30 second timeout
+    
+    xhr.onload = function() {
+      console.log('XHR response:', xhr.status, xhr.statusText);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const result = JSON.parse(xhr.responseText);
+          console.log('XHR submission successful:', result);
+          if (result && result.data) {
+            resolve(result);
+          } else {
+            reject(new Error('استجابة غير صالحة من الخادم'));
+          }
+        } catch (parseError) {
+          console.error('XHR parse error:', parseError);
+          reject(new Error('خطأ في تحليل استجابة الخادم'));
+        }
+      } else {
+        console.error('XHR failed:', xhr.status, xhr.responseText);
+        let errorMessage = `HTTP ${xhr.status}`;
+        try {
+          const errorData = JSON.parse(xhr.responseText);
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (parseError) {
+          errorMessage = xhr.responseText || errorMessage;
+        }
+        reject(new Error(`خطأ في الخادم: ${errorMessage}`));
+      }
+    };
+    
+    xhr.onerror = function() {
+      console.error('XHR network error');
+      reject(new Error('فشل في الاتصال بالخادم باستخدام XMLHttpRequest'));
+    };
+    
+    xhr.ontimeout = function() {
+      console.error('XHR timeout');
+      reject(new Error('انتهت مهلة الاتصال'));
+    };
+    
+    try {
+      xhr.send(JSON.stringify(orderData));
+      console.log('XHR request sent');
+    } catch (sendError) {
+      console.error('XHR send error:', sendError);
+      reject(new Error('خطأ في إرسال البيانات'));
+    }
+  });
 };
 
 // Order tracking function

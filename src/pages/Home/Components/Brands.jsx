@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Grid, EffectFade } from 'swiper/modules';
 import { fetchBrands } from '../../../services/api';
+import SwiperErrorBoundary from '../../../components/SwiperErrorBoundary';
 import 'swiper/css';
 import 'swiper/css/grid';
 import 'swiper/css/effect-fade';
@@ -12,17 +13,27 @@ const Brands = () => {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const swiperRef = useRef(null);
 
   useEffect(() => {
     const loadBrands = async () => {
       try {
         setLoading(true);
         setError(null);
+        setIsInitialized(false);
         
         const brandsData = await fetchBrands();
-        setBrands(brandsData);
+        if (Array.isArray(brandsData) && brandsData.length > 0) {
+          setBrands(brandsData);
+          // Wait for DOM to update before initializing
+          setTimeout(() => setIsInitialized(true), 100);
+        } else {
+          setBrands([]);
+        }
       } catch (err) {
         setError(err.message);
+        setBrands([]);
       } finally {
         setLoading(false);
       }
@@ -145,10 +156,12 @@ const Brands = () => {
 
         {/* Mobile Layout */}
         <div className="lg:hidden">
-          {brands.length > 0 && (
+          {isInitialized && brands.length > 0 && (
+          <SwiperErrorBoundary>
           <Swiper
-            key={`brands-swiper-${brands.length}`}
-            modules={[Grid, Autoplay, EffectFade]}
+            key={`brands-swiper-${brands.length}-${isInitialized ? 'init' : 'loading'}`}
+            ref={swiperRef}
+            modules={[Grid, Autoplay]}
             grid={{
               rows: 2,
               fill: 'row'
@@ -162,16 +175,42 @@ const Brands = () => {
             } : false}
             speed={800}
             className="h-[400px]"
-            loop={brands.length > 4}
+            loop={false}
             watchOverflow={true}
             observer={true}
             observeParents={true}
             onSwiper={(swiper) => {
-              // Ensure swiper is properly initialized
-              if (swiper && brands.length > 0) {
-                setTimeout(() => {
+              try {
+                if (swiper && brands.length > 0) {
+                  // Store swiper instance for future reference
+                  swiperRef.current = swiper;
+                  // Small delay to ensure DOM is ready
+                  setTimeout(() => {
+                    if (swiper && !swiper.destroyed) {
+                      swiper.update();
+                    }
+                  }, 200);
+                }
+              } catch (error) {
+                console.warn('Swiper initialization warning:', error);
+              }
+            }}
+            onInit={(swiper) => {
+              try {
+                if (swiper && brands.length > 0) {
                   swiper.update();
-                }, 100);
+                }
+              } catch (error) {
+                console.warn('Swiper init warning:', error);
+              }
+            }}
+            onBeforeDestroy={(swiper) => {
+              try {
+                if (swiperRef.current === swiper) {
+                  swiperRef.current = null;
+                }
+              } catch (error) {
+                console.warn('Swiper destroy warning:', error);
               }
             }}
           >
@@ -206,6 +245,7 @@ const Brands = () => {
               </SwiperSlide>
             ))}
           </Swiper>
+          </SwiperErrorBoundary>
           )}
         </div>
 

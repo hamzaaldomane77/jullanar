@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
 import { fetchOffersProducts } from '../../../services/api';
 import { useCart } from '../../../contexts/CartContext';
+import SwiperErrorBoundary from '../../../components/SwiperErrorBoundary';
 import toast from 'react-hot-toast';
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -12,18 +13,28 @@ const Offers = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   const { addToCart } = useCart();
+  const swiperRef = useRef(null);
 
   useEffect(() => {
     const loadOffersProducts = async () => {
       try {
         setLoading(true);
         setError(null);
+        setIsInitialized(false);
         
         const offersData = await fetchOffersProducts();
-        setProducts(offersData);
+        if (Array.isArray(offersData) && offersData.length > 0) {
+          setProducts(offersData);
+          // Wait for DOM to update before initializing
+          setTimeout(() => setIsInitialized(true), 100);
+        } else {
+          setProducts([]);
+        }
       } catch (err) {
         setError(err.message);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
@@ -99,28 +110,14 @@ const Offers = () => {
     );
   }
 
-  if (loading) {
-    return (
-      <section className="py-16 bg-white overflow-hidden">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-[#a00000]">العروض</h2>
-          <div className="text-center text-[#585D60] mx-auto mb-8">استكشف معنا اهم العروض المتوفرة في متجرنا</div>
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#a00000]"></div>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (error || products.length === 0) {
+  if (!products || products.length === 0) {
     return (
       <section className="py-16 bg-white overflow-hidden">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12 text-[#a00000]">العروض</h2>
           <div className="text-center text-[#585D60] mx-auto mb-8">استكشف معنا اهم العروض المتوفرة في متجرنا</div>
           <div className="text-center py-8">
-            <p className="text-gray-600">{error || "لا توجد عروض متوفرة حالياً"}</p>
+            <p className="text-gray-600">لا توجد عروض متوفرة حالياً</p>
           </div>
         </div>
       </section>
@@ -134,6 +131,9 @@ const Offers = () => {
           العروض
         </h2>
         <div className="text-center text-[#585D60] mx-auto mb-8">استكشف معنا اهم العروض المتوفرة في متجرنا</div>
+        
+        {isInitialized && products.length > 0 && (
+        <SwiperErrorBoundary>
         <div className="relative group">
           <style>
             {`
@@ -217,22 +217,26 @@ const Offers = () => {
 
           <div className="max-w-[90%] mx-auto relative">
             <Swiper
-              key={`offers-swiper-${products.length}`}
+              key={`offers-swiper-${products.length}-${isInitialized ? 'init' : 'loading'}`}
+              ref={swiperRef}
               modules={[Navigation, Autoplay]}
               spaceBetween={24}
               slidesPerView={1}
               navigation={{
                 prevEl: '.offers-prev',
                 nextEl: '.offers-next',
-                enabled: products.length > 0
+                enabled: true,
+                disabledClass: 'swiper-button-disabled'
               }}
               autoplay={products.length > 4 ? {
                 delay: 3000,
                 disableOnInteraction: false,
-                pauseOnMouseEnter: true
+                pauseOnMouseEnter: true,
+                stopOnLastSlide: false
               } : false}
               speed={800}
               loop={products.length > 4}
+              loopAdditionalSlides={1}
               breakpoints={{
                 640: {
                   slidesPerView: 2,
@@ -248,12 +252,40 @@ const Offers = () => {
               watchOverflow={true}
               observer={true}
               observeParents={true}
+              resistance={true}
+              resistanceRatio={0.85}
               onSwiper={(swiper) => {
-                // Ensure swiper is properly initialized
-                if (swiper && products.length > 0) {
-                  setTimeout(() => {
+                try {
+                  if (swiper && products.length > 0) {
+                    // Store swiper instance for future reference
+                    swiperRef.current = swiper;
+                    // Small delay to ensure DOM is ready
+                    setTimeout(() => {
+                      if (swiper && !swiper.destroyed) {
+                        swiper.update();
+                      }
+                    }, 200);
+                  }
+                } catch (error) {
+                  console.warn('Swiper initialization warning:', error);
+                }
+              }}
+              onInit={(swiper) => {
+                try {
+                  if (swiper && products.length > 0) {
                     swiper.update();
-                  }, 100);
+                  }
+                } catch (error) {
+                  console.warn('Swiper init warning:', error);
+                }
+              }}
+              onBeforeDestroy={(swiper) => {
+                try {
+                  if (swiperRef.current === swiper) {
+                    swiperRef.current = null;
+                  }
+                } catch (error) {
+                  console.warn('Swiper destroy warning:', error);
                 }
               }}
             >
@@ -333,6 +365,8 @@ const Offers = () => {
             </div>
           </div>
         </div>
+        </SwiperErrorBoundary>
+        )}
       </div>
     </section>
   );

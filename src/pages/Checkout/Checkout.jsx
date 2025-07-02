@@ -27,6 +27,7 @@ const Checkout = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [submitStatus, setSubmitStatus] = useState('');
 
   // Syrian governorates
   const syriaGovernorates = [
@@ -119,6 +120,7 @@ const Checkout = () => {
 
     try {
       setIsSubmitting(true);
+      setSubmitStatus('جاري تحضير البيانات...');
 
       // Prepare items for API
       const apiItems = cartItems.map(item => ({
@@ -141,7 +143,10 @@ const Checkout = () => {
       };
 
       // Submit order to API
+      setSubmitStatus('جاري إرسال الطلب...');
       const result = await submitOrder(orderData);
+      
+      setSubmitStatus('تم إرسال الطلب بنجاح!');
       
       // Navigate to success page with order data
       navigate('/order-success', { 
@@ -158,9 +163,31 @@ const Checkout = () => {
       // Clear cart after successful submission
       clearCart();
     } catch (error) {
-      alert('خطأ في إرسال الطلب: ' + error.message);
+      console.error('Checkout error:', error);
+      
+      // Show user-friendly error message
+      let userMessage = 'حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.';
+      
+      if (error.message.includes('فشل في الاتصال')) {
+        userMessage = 'تعذر الاتصال بالخادم. تحقق من اتصال الإنترنت وحاول مرة أخرى.';
+      } else if (error.message.includes('انتهت مهلة')) {
+        userMessage = 'انتهت مهلة الاتصال. يرجى المحاولة مرة أخرى.';
+      } else if (error.message.includes('خطأ في الخادم')) {
+        userMessage = 'مشكلة في الخادم. يرجى المحاولة لاحقاً أو التواصل مع خدمة العملاء.';
+      } else if (error.message) {
+        userMessage = error.message;
+      }
+      
+      // Use a more user-friendly alert
+      if (window.confirm(`${userMessage}\n\nهل تريد المحاولة مرة أخرى؟`)) {
+        // User wants to retry
+        setTimeout(() => {
+          handleSubmitOrder();
+        }, 1000);
+      }
     } finally {
       setIsSubmitting(false);
+      setSubmitStatus('');
     }
   };
 
@@ -463,6 +490,20 @@ const Checkout = () => {
                 </div>
               )}
 
+              {/* Status Message */}
+              {submitStatus && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center">
+                    <svg className="animate-spin w-5 h-5 text-blue-500 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span className="text-sm text-blue-700 font-medium">
+                      {submitStatus}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Submit Button */}
               <div className="space-y-3">
                 <button
@@ -481,19 +522,38 @@ const Checkout = () => {
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                   )}
-                  {isSubmitting ? 'جاري إرسال الطلب...' : 'إرسال الطلب'}
+                  {isSubmitting ? submitStatus || 'جاري الإرسال...' : 'إرسال الطلب'}
                 </button>
               </div>
 
               {/* Order Notice */}
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <div className="flex items-center">
-                  <svg className="w-4 h-4 text-blue-500 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-xs text-blue-700">
-                    سيتم التواصل معك لتأكيد الطلب وترتيب التوصيل
-                  </span>
+              <div className="mt-4 space-y-3">
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 text-blue-500 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-xs text-blue-700">
+                      سيتم التواصل معك لتأكيد الطلب وترتيب التوصيل
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Mobile Network Notice */}
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <div className="flex items-start">
+                    <svg className="w-4 h-4 text-green-500 ml-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="text-xs text-green-700">
+                      <p className="font-medium mb-1">نصائح للإرسال الناجح:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>تأكد من اتصال الإنترنت</li>
+                        <li>في حالة فشل الإرسال، جرب تغيير الشبكة (Wi-Fi ↔ بيانات الجوال)</li>
+                        <li>أعد المحاولة بعد ثوانِ قليلة</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
