@@ -102,7 +102,7 @@ export const fetchProducts = async () => {
   // Strategy 5: Use Vite proxy (development only)
   if (import.meta.env.DEV) {
     try {
-      const response = await fetch('/api/products', {
+      const response = await fetch('/api/v1/products', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -400,7 +400,7 @@ export const submitOrder = async (orderData) => {
 export const trackOrder = async (orderNumber, phone) => {
   // Use proxy in development, direct URL in production
   const apiUrl = import.meta.env.DEV 
-    ? '/api/orders/track'  // Uses Vite proxy
+    ? '/api/v1/orders/track'  // Uses Vite proxy
     : 'https://backend.jullanar.shop/api/v1/orders/track';
   const requestData = {
     number: orderNumber,
@@ -543,7 +543,7 @@ export const fetchBrands = async () => {
   // Strategy 3: Use Vite proxy (development only)
   if (import.meta.env.DEV) {
     try {
-      const response = await fetch('/api/brands', {
+      const response = await fetch('/api/v1/brands', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -638,7 +638,7 @@ export const fetchCategories = async () => {
   // Strategy 3: Use Vite proxy (development only)
   if (import.meta.env.DEV) {
     try {
-      const response = await fetch('/api/categories', {
+      const response = await fetch('/api/v1/categories', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -733,7 +733,7 @@ export const fetchFeaturedProducts = async () => {
   // Strategy 3: Use Vite proxy (development only)
   if (import.meta.env.DEV) {
     try {
-      const response = await fetch('/api/featured-products', {
+      const response = await fetch('/api/v1/featured-products', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -828,7 +828,7 @@ export const fetchOffersProducts = async () => {
   // Strategy 3: Use Vite proxy (development only)
   if (import.meta.env.DEV) {
     try {
-      const response = await fetch('/api/offers-products', {
+      const response = await fetch('/api/v1/offers-products', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
