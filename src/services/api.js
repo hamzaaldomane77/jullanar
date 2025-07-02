@@ -324,7 +324,7 @@ export const findProductBySlug = (products, slug) => {
 export const submitOrder = async (orderData) => {
   // Use proxy in development, direct URL in production
   const apiUrl = import.meta.env.DEV 
-    ? '/api/orders'  // Uses Vite proxy
+    ? '/api/v1/orders'  // Uses Vite proxy
     : 'https://backend.jullanar.shop/api/v1/orders';
   
   try {
