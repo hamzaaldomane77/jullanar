@@ -1,49 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { findProductBySlug } from '../../services/api';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import { findProductBySlug, fetchProducts } from '../../services/api';
 import { useCart } from '../../contexts/CartContext';
 import toast from 'react-hot-toast';
 
 const ProductDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [selectedOption, setSelectedOption] = useState(null);
   
-  const { addToCart, isInCart, getCartItem, formatPrice } = useCart();
+  const { addToCart, isInCart, getCartItem } = useCart();
 
   useEffect(() => {
     loadProduct();
-  }, [slug]);
+  }, [slug, location]);
 
   const loadProduct = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // For now, we'll use mock data since we need to integrate with the existing API
-      // In a real implementation, you would fetch the product by slug from the API
-      const mockProduct = {
-        id: 1,
-        name: 'جوارب السماح',
-        slug: 'goarb-alsmah',
-        description: 'جوارب السماح عالية الجودة مصنوعة من أفضل الخامات',
-        price: '86000.00',
-        old_price: '96000.00',
-        featured: false,
-        brand: 'ماما هيام',
-        categories: ['جوارب'],
-        images: [
-          'https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?w=800',
-          'https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?w=800',
-          'https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?w=800'
-        ]
-      };
-      
-      setProduct(mockProduct);
+      // Check if product was passed via navigation state
+      if (location.state && location.state.product) {
+        const productFromState = location.state.product;
+        setProduct(productFromState);
+        
+        // Set default selected option for variable products
+        if (productFromState.type === 'variable' && productFromState.options && productFromState.options.length > 0) {
+          setSelectedOption(productFromState.options[0]);
+        }
+      } else {
+        // If no product in state, fetch from API
+        const result = await fetchProducts();
+        const foundProduct = result.data.find(p => p.slug === slug);
+        
+        if (foundProduct) {
+          setProduct(foundProduct);
+          
+          // Set default selected option for variable products
+          if (foundProduct.type === 'variable' && foundProduct.options && foundProduct.options.length > 0) {
+            setSelectedOption(foundProduct.options[0]);
+          }
+        } else {
+          setError('المنتج غير موجود');
+        }
+      }
     } catch (err) {
       setError('فشل في تحميل المنتج');
     } finally {
@@ -56,7 +63,17 @@ const ProductDetail = () => {
   };
 
   const handleAddToCart = () => {
-    addToCart(product, quantity);
+    // For variable products, use the selected option
+    if (product.type === 'variable' && selectedOption) {
+      const productWithOption = {
+        ...product,
+        price: selectedOption.price,
+        selectedOption: selectedOption
+      };
+      addToCart(productWithOption, quantity);
+    } else {
+      addToCart(product, quantity);
+    }
     
     // Show success toast
     toast.success(`تمت إضافة ${quantity} من ${product.name} إلى السلة`, {
@@ -73,8 +90,19 @@ const ProductDetail = () => {
   };
 
   const handleBuyNow = () => {
-    addToCart(product, quantity);
-    toast.success('حالة الانتقال الى صفحة اتمام الطلب', {
+    // For variable products, use the selected option
+    if (product.type === 'variable' && selectedOption) {
+      const productWithOption = {
+        ...product,
+        price: selectedOption.price,
+        selectedOption: selectedOption
+      };
+      addToCart(productWithOption, quantity);
+    } else {
+      addToCart(product, quantity);
+    }
+    
+    toast.success('جاري الانتقال إلى صفحة إتمام الطلب', {
       duration: 2000,
       position: 'top-center',
       style: {
@@ -89,6 +117,11 @@ const ProductDetail = () => {
     setTimeout(() => {
       navigate('/checkout');
     }, 1000);
+  };
+  
+  // Handle option selection for variable products
+  const handleOptionChange = (option) => {
+    setSelectedOption(option);
   };
 
   if (loading) {
@@ -130,8 +163,32 @@ const ProductDetail = () => {
     );
   }
 
+  // Format price helper function
+  const formatPrice = (price) => {
+    if (!price) return '';
+    
+    // If price is already formatted (contains commas or is a string with text)
+    if (typeof price === 'string' && (price.includes(',') || isNaN(parseFloat(price)))) {
+      return price;
+    }
+    
+    // Otherwise format it as number only, then add SYP manually
+    const formattedNumber = new Intl.NumberFormat('ar-SY', {
+      style: 'decimal',
+      minimumFractionDigits: 0
+    }).format(price);
+    
+    return `${formattedNumber} ل.س`;
+  };
+  
+  // For variable products, use selected option price
+  const currentPrice = product.type === 'variable' && selectedOption 
+    ? selectedOption.price 
+    : product.price;
+    
+  // Calculate discount if applicable
   const discount = product.old_price && product.old_price !== '0.00' 
-    ? Math.round(((parseFloat(product.old_price) - parseFloat(product.price)) / parseFloat(product.old_price)) * 100)
+    ? Math.round(((parseFloat(product.old_price) - parseFloat(currentPrice)) / parseFloat(product.old_price)) * 100)
     : 0;
 
   const cartItem = getCartItem(product.id);
@@ -175,14 +232,14 @@ const ProductDetail = () => {
           <div className="space-y-4">
             {/* Main Image */}
             <div className="aspect-square bg-white rounded-lg shadow-md overflow-hidden relative">
-              <img
-                src={product.images[selectedImage] || product.images[0]}
-                alt={product.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/500x500?text=صورة+غير+متوفرة';
-                }}
-              />
+                              <img
+                    src={(product.images && product.images.length > 0) ? product.images[selectedImage] : (product.image || 'https://via.placeholder.com/500x500?text=صورة+غير+متوفرة')}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/500x500?text=صورة+غير+متوفرة';
+                    }}
+                  />
               {product.featured && (
                 <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-sm font-medium">
                   مميز
@@ -201,7 +258,7 @@ const ProductDetail = () => {
             </div>
 
             {/* Thumbnail Images */}
-            {product.images.length > 1 && (
+            {product.images && product.images.length > 1 && (
               <div className="flex space-x-2 rtl:space-x-reverse">
                 {product.images.map((image, index) => (
                   <button
@@ -215,6 +272,9 @@ const ProductDetail = () => {
                       src={image}
                       alt={`${product.name} ${index + 1}`}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = 'https://via.placeholder.com/100x100?text=صورة+غير+متوفرة';
+                      }}
                     />
                   </button>
                 ))}
@@ -229,7 +289,9 @@ const ProductDetail = () => {
               <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
               <div className="flex items-center space-x-4 rtl:space-x-reverse mb-4">
                 <span className="text-3xl font-bold text-[#7C0000]">
-                  {formatPrice(product.price)}
+                  {product.type === 'variable' && selectedOption 
+                    ? formatPrice(selectedOption.price)
+                    : product.displayPrice || formatPrice(product.price)}
                 </span>
                 {product.old_price && product.old_price !== '0.00' && (
                   <span className="text-xl text-gray-500 line-through">
@@ -273,6 +335,28 @@ const ProductDetail = () => {
               </div>
             </div>
 
+            {/* Product Options (for variable products) */}
+            {product.type === 'variable' && product.options && product.options.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">الخيارات</h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.options.map((option) => (
+                    <button
+                      key={option.option_id}
+                      onClick={() => handleOptionChange(option)}
+                      className={`px-4 py-2 border rounded-md transition-colors ${
+                        selectedOption && selectedOption.option_id === option.option_id
+                          ? 'bg-blue-500 text-white border-blue-500'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {option.name} - {formatPrice(option.price)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             {/* Quantity Selector */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">الكمية</h3>

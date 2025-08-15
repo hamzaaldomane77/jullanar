@@ -9,8 +9,8 @@ const CORS_PROXIES = [
 ];
 
 // Function to fetch products using multiple strategies
-export const fetchProducts = async () => {
-  const targetUrl = `${API_BASE_URL}/products`;
+export const fetchProducts = async (page = 1, perPage = 12) => {
+  const targetUrl = `${API_BASE_URL}/products?page=${page}&per_page=${perPage}`;
   
   // Strategy 1: Try direct fetch first
   try {
@@ -24,8 +24,36 @@ export const fetchProducts = async () => {
     });
 
     if (response.ok) {
-      const data = await response.json();
-      return data.data;
+      const result = await response.json();
+      // Process products to normalize the structure
+      const processedProducts = result.data.map(product => {
+        // For variable products, keep the original price text but ensure it has ل.س
+        const displayPrice = product.type === 'variable' 
+          ? (product.price.includes('ل.س') ? product.price : `${product.price} ل.س`) 
+          : formatPrice(product.price);
+          
+        return {
+          ...product,
+          // Convert image to images array for compatibility
+          images: product.image ? [product.image] : [],
+          // Handle price display for variable products
+          displayPrice: displayPrice
+        };
+      });
+      
+      // Return both the processed products and pagination info
+      return {
+        data: processedProducts,
+        pagination: {
+          current_page: result.meta.current_page,
+          per_page: result.meta.per_page,
+          total: result.meta.total,
+          last_page: result.meta.last_page,
+          from: result.meta.from,
+          to: result.meta.to,
+          has_more: result.meta.current_page < result.meta.last_page
+        }
+      };
     }
   } catch (error) {
     // Continue to next strategy
@@ -293,8 +321,39 @@ export const filterProducts = (products, filters) => {
   return filteredProducts;
 };
 
+// Helper function to format price
+const formatPrice = (price) => {
+  if (!price) return '';
+  
+  // Handle string prices that might already be formatted
+  if (typeof price === 'string' && price.includes(',')) {
+    // Add ل.س if it doesn't already have it
+    return price.includes('ل.س') ? price : `${price} ل.س`;
+  }
+  
+  // Convert to number if it's a string
+  const numPrice = typeof price === 'string' ? parseFloat(price.replace(/,/g, '')) : price;
+  
+  // Format the number and add Syrian Pound
+  const formattedNumber = new Intl.NumberFormat('ar-SY', {
+    style: 'decimal',
+    minimumFractionDigits: 0
+  }).format(numPrice);
+  
+  return `${formattedNumber} ل.س`;
+};
+
 // Paginate products
 export const paginateProducts = (products, page = 1, perPage = 12) => {
+  // If products already includes pagination info, use it
+  if (products.pagination) {
+    return {
+      data: products.data,
+      pagination: products.pagination
+    };
+  }
+  
+  // Otherwise, create pagination manually
   const startIndex = (page - 1) * perPage;
   const endIndex = startIndex + perPage;
   const paginatedProducts = products.slice(startIndex, endIndex);
@@ -307,7 +366,7 @@ export const paginateProducts = (products, page = 1, perPage = 12) => {
       current_page: page,
       per_page: perPage,
       total: products.length,
-      total_pages: totalPages,
+      last_page: totalPages,
       from: startIndex + 1,
       to: Math.min(endIndex, products.length),
       has_more: page < totalPages
@@ -323,6 +382,18 @@ export const findProductBySlug = (products, slug) => {
 // Order submission function
 export const submitOrder = async (orderData) => {
   console.log('Submitting order with data:', orderData);
+  
+  // Validate order data structure
+  if (!orderData.items || !Array.isArray(orderData.items)) {
+    throw new Error('بيانات المنتجات غير صحيحة');
+  }
+  
+  // Ensure each item has the correct structure
+  orderData.items.forEach(item => {
+    if (!item.shop_product_id || !item.qty) {
+      throw new Error('بيانات أحد المنتجات غير مكتملة');
+    }
+  });
   
   const directUrl = 'https://backend.jullanar.shop/api/v1/orders';
   const proxyUrl = '/api/v1/orders';

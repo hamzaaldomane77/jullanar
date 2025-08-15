@@ -6,8 +6,6 @@ import { CartProvider } from './contexts/CartContext';
 import Loading from './components/Loading';
 import ScrollToTop from './components/ScrollToTop';
 
-
-
 import Home from './pages/Home/Home';
 import Brands from './pages/Brands/Brands';
 import BrandPage from './pages/Brands/BrandPage';
@@ -16,11 +14,12 @@ import CategoryPage from './pages/Categories/CategoryPage';
 import Products from './pages/Products/Products';
 import ProductDetail from './pages/Products/ProductDetail';
 
-
 import Cart from './pages/Cart/Cart';
 import Checkout from './pages/Checkout/Checkout';
 import OrderTracking from './pages/OrderTracking/OrderTracking';
 import OrderSuccess from './pages/OrderSuccess/OrderSuccess';
+import Privacy from './pages/Privacy/Privacy';
+import Returns from './pages/Returns/Returns';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -55,8 +54,8 @@ function App() {
               <Route path="brands/:brandSlug" element={<BrandPage />} />
               <Route path="categories" element={<Categories />} />
               <Route path="categories/:slug" element={<CategoryPage />} />
-              
-             
+              <Route path="privacy" element={<Privacy />} />
+              <Route path="returns" element={<Returns />} />
               
               {/* صفحة 404 للمسارات غير الموجودة */}
               <Route path="*" element={<div className="text-center p-12">

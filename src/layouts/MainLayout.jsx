@@ -68,11 +68,26 @@ const MainLayout = () => {
                 تتبع الطلب
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-600 transition-all duration-200 group-hover:w-full"></span>
               </Link>
+              <Link 
+                to="/privacy" 
+                className="text-gray-700 hover:text-red-600 font-medium transition-colors duration-200 relative group"
+              >
+                سياسة الخصوصية
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-600 transition-all duration-200 group-hover:w-full"></span>
+              </Link>
+              <Link 
+                to="/returns" 
+                className="text-gray-700 hover:text-red-600 font-medium transition-colors duration-200 relative group"
+              >
+                سياسة الاسترجاع
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-600 transition-all duration-200 group-hover:w-full"></span>
+              </Link>
             </nav>
 
             {/* Header Actions */}
             <div className="flex items-center space-x-4 rtl:space-x-reverse">
-              {/* Phone Number - Desktop */}
+              {/* Placeholder for spacing */}
+              <div className="hidden md:block"></div>
           
 
               {/* Cart Icon */}
@@ -111,11 +126,8 @@ const MainLayout = () => {
             <div className="py-4 border-t border-gray-200">
               {/* Mobile Phone Number */}
               <div className="mb-4 px-4">
-                <div className="flex items-center justify-center bg-red-50 rounded-lg p-3">
-                  <svg className="w-5 h-5 ml-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                  <span className="font-medium text-gray-800">0983596774</span>
+                <div className="text-center text-gray-600 text-sm">
+                  تواصل معنا عبر الواتساب أو البريد الإلكتروني
                 </div>
               </div>
 
@@ -181,6 +193,30 @@ const MainLayout = () => {
                     تتبع الطلب
                   </div>
                 </Link>
+                <Link 
+                  to="/privacy" 
+                  className="block px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    سياسة الخصوصية
+                  </div>
+                </Link>
+                <Link 
+                  to="/returns" 
+                  className="block px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
+                    </svg>
+                    سياسة الاسترجاع
+                  </div>
+                </Link>
                 <button 
                   onClick={() => {
                     handleCartClick();
@@ -239,43 +275,38 @@ const MainLayout = () => {
             <div className="text-center sm:text-right">
               <h3 className="text-xl font-bold mb-4 text-white">خدمة العملاء</h3>
               <ul className="space-y-2">
-                <li><Link to="/faq" className="hover:text-white transition-colors">الأسئلة الشائعة</Link></li>
-                <li><Link to="/shopping-guide" className="hover:text-white transition-colors">التسوق</Link></li>
-                <li><Link to="/order-tracking" className="hover:text-white transition-colors">حالة الطلب</Link></li>
-                <li><Link to="/returns" className="hover:text-white transition-colors">استرجاع وتبديل</Link></li>
+                <li><Link to="/order-tracking" className="hover:text-white transition-colors">تتبع الطلب</Link></li>
+                <li><Link to="/returns" className="hover:text-white transition-colors">سياسة الاسترجاع والتبديل</Link></li>
+                <li><Link to="/privacy" className="hover:text-white transition-colors">سياسة الخصوصية</Link></li>
               </ul>
             </div>
 
             {/* Contact Us */}
             <div className="text-center sm:text-right">
               <h3 className="text-xl font-bold mb-4 text-white">تواصل معنا</h3>
-              <div className="space-y-2 mb-4">
-                <p className="flex items-center justify-center sm:justify-start">
-                  <svg className="h-5 w-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                  0983596774
-                </p>
-                <p className="flex items-center justify-center sm:justify-start">
-                  <svg className="h-5 w-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  info@jullanar.shop
-                </p>
+              <div className="space-y-3 mb-4">
+                <p className="text-gray-300">0983596774</p>
+                <p className="text-gray-300">info@jullanar.shop</p>
               </div>
               
               {/* Social Media */}
               <div className="flex justify-center sm:justify-start space-x-4 rtl:space-x-reverse">
-                <a href="#" className="text-gray-300 hover:text-white transition-colors">
-                  <span className="sr-only">تويتر</span>
-                  <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                <a href="https://www.facebook.com/share/18gwjDK5nw/" target="_blank" rel="noopener noreferrer" className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors">
+                  <span className="sr-only">فيسبوك</span>
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/>
                   </svg>
                 </a>
-                <a href="#" className="text-gray-300 hover:text-white transition-colors">
-                  <span className="sr-only">فيسبوك</span>
-                  <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/>
+                <a href="https://wa.me/+963983596774" target="_blank" rel="noopener noreferrer" className="bg-green-600 text-white p-2 rounded-full hover:bg-green-700 transition-colors">
+                  <span className="sr-only">واتساب</span>
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path fillRule="evenodd" d="M17.415 14.382c-.298-.149-1.759-.867-2.031-.967-.272-.099-.47-.148-.669.15-.198.296-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.297-.497.1-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.57-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" clipRule="evenodd" />
+                  </svg>
+                </a>
+                <a href="mailto:info@jullanar.shop" className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors">
+                  <span className="sr-only">البريد الإلكتروني</span>
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </a>
               </div>
@@ -285,9 +316,9 @@ const MainLayout = () => {
           {/* Bottom Footer */}
           <div className="border-t border-gray-700 mt-8 pt-8">
             <div className="text-center space-x-4 rtl:space-x-reverse mb-4 text-sm">
-              <Link to="/terms" className="hover:text-white transition-colors">الأحكام والشروط</Link>
+              <Link to="/returns" className="hover:text-white transition-colors">سياسة الاسترجاع والتبديل</Link>
               <span>|</span>
-              <Link to="/privacy" className="hover:text-white transition-colors">الخصوصية</Link>
+              <Link to="/privacy" className="hover:text-white transition-colors">سياسة الخصوصية</Link>
             </div>
             <p className="text-center text-sm">
               جميع الحقوق محفوظة &copy; 2025 جُلّنار

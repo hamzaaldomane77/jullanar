@@ -23,30 +23,42 @@ const Products = () => {
     perPage: 8
   });
 
-  // Load products once when component mounts
+  // Load products whenever page or perPage changes
   useEffect(() => {
-    loadProducts();
-  }, []);
+    loadProducts(filters.page, filters.perPage);
+  }, [filters.page, filters.perPage]);
 
-  // Apply filters and pagination whenever filters change
+  // Apply filters whenever other filter options change (not page/perPage)
   useEffect(() => {
-    if (allProducts.length > 0) {
+    if (allProducts.data && allProducts.data.length > 0) {
       applyFiltersAndPagination();
     }
-  }, [allProducts, filters]);
+  }, [
+    allProducts, 
+    filters.search, 
+    filters.categories, 
+    filters.priceMin, 
+    filters.priceMax, 
+    filters.sortBy, 
+    filters.featured
+  ]);
 
-  const loadProducts = async () => {
+  const loadProducts = async (page = 1, perPage = 8) => {
     try {
       setLoading(true);
       setError(null);
       
-      const products = await fetchProducts();
+      const result = await fetchProducts(page, perPage);
       
-      setAllProducts(products);
+      setAllProducts(result);
       
       // Extract unique categories
-      const uniqueCategories = getUniqueCategories(products);
+      const uniqueCategories = getUniqueCategories(result.data);
       setCategories(uniqueCategories);
+      
+      // Set displayed products and pagination directly from API result
+      setDisplayedProducts(result.data);
+      setPagination(result.pagination);
       
     } catch (err) {
       setError(err.message);
@@ -56,14 +68,19 @@ const Products = () => {
   };
 
   const applyFiltersAndPagination = () => {
-    // Filter products
-    const filteredProducts = filterProducts(allProducts, filters);
+    if (!allProducts.data) return;
     
-    // Paginate filtered products
-    const paginatedResult = paginateProducts(filteredProducts, filters.page, filters.perPage);
+    // Filter products
+    const filteredProducts = filterProducts(allProducts.data, filters);
+    
+    // Paginate filtered products (local pagination when filters are applied)
+    const paginatedResult = paginateProducts(filteredProducts, 1, filters.perPage);
     
     setDisplayedProducts(paginatedResult.data);
-    setPagination(paginatedResult.pagination);
+    setPagination({
+      ...paginatedResult.pagination,
+      current_page: 1 // Reset to first page when filters change
+    });
   };
 
   const handleFilterChange = (newFilters) => {

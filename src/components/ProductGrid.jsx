@@ -7,8 +7,15 @@ const ProductGrid = ({ products, loading, pagination, onPageChange }) => {
   const navigate = useNavigate();
   const { addToCart, isInCart, getCartItem } = useCart();
 
-  const handleProductClick = (productSlug) => {
-    navigate(`/products/${productSlug}`);
+  const handleProductClick = (product) => {
+    // Pass product data via state to avoid additional API calls
+    navigate(`/products/${product.slug}`, { 
+      state: { 
+        product,
+        // Include options data for variable products
+        productOptions: product.options || []
+      } 
+    });
   };
 
   const handleAddToCart = (e, product) => {
@@ -30,11 +37,20 @@ const ProductGrid = ({ products, loading, pagination, onPageChange }) => {
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('ar-SY', {
-      style: 'currency',
-      currency: 'SYP',
+    if (!price) return '';
+    
+    // If price is already formatted (contains commas or is a string with text)
+    if (typeof price === 'string' && (price.includes(',') || isNaN(parseFloat(price)))) {
+      return price;
+    }
+    
+    // Otherwise format it as number only, then add SYP manually
+    const formattedNumber = new Intl.NumberFormat('ar-SY', {
+      style: 'decimal',
       minimumFractionDigits: 0
     }).format(price);
+    
+    return `${formattedNumber} ل.س`;
   };
 
   const renderDiscountBadge = (price, oldPrice) => {
@@ -166,7 +182,7 @@ const ProductGrid = ({ products, loading, pagination, onPageChange }) => {
             return (
               <div
                 key={product.id}
-                onClick={() => handleProductClick(product.slug)}
+                onClick={() => handleProductClick(product)}
                 className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer overflow-hidden group relative"
               >
                 {/* Cart indicator */}
@@ -181,14 +197,14 @@ const ProductGrid = ({ products, loading, pagination, onPageChange }) => {
                   {renderFeaturedBadge(product.featured)}
                   
                   <img
-                    src={product.images[0] || '/placeholder-product.jpg'}
+                    src={(product.images && product.images.length > 0) ? product.images[0] : '/placeholder-product.jpg'}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"
                   />
                   
                   {/* Additional images indicator */}
-                  {product.images.length > 1 && (
+                  {product.images && product.images.length > 1 && (
                     <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
                       +{product.images.length - 1}
                     </div>
@@ -218,7 +234,7 @@ const ProductGrid = ({ products, loading, pagination, onPageChange }) => {
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col">
                       <span className="text-xl font-bold text-[#7C0000]">
-                        {formatPrice(product.price)}
+                        {product.displayPrice || formatPrice(product.price)}
                       </span>
                       {product.old_price && product.old_price !== '0.00' && (
                         <span className="text-sm text-gray-500 line-through">
