@@ -63,6 +63,22 @@ const ProductDetail = () => {
   };
 
   const handleAddToCart = () => {
+    // Check if the product is variable and requires option selection
+    if (product.type === 'variable' && product.options && product.options.length > 0 && !selectedOption) {
+      toast.error('يجب اختيار أحد الخيارات المتاحة قبل إضافة المنتج إلى السلة', {
+        duration: 4000,
+        position: 'top-center',
+        style: {
+          background: '#EF4444',
+          color: '#fff',
+          borderRadius: '8px',
+          fontFamily: 'Arial, sans-serif'
+        },
+        icon: '⚠️',
+      });
+      return;
+    }
+
     // For variable products, use the selected option
     if (product.type === 'variable' && selectedOption) {
       const productWithOption = {
@@ -70,7 +86,7 @@ const ProductDetail = () => {
         price: selectedOption.price,
         selectedOption: selectedOption
       };
-      addToCart(productWithOption, quantity);
+      addToCart(productWithOption, quantity, selectedOption.option_id);
     } else {
       addToCart(product, quantity);
     }
@@ -90,29 +106,64 @@ const ProductDetail = () => {
   };
 
   const handleBuyNow = () => {
-    // For variable products, use the selected option
-    if (product.type === 'variable' && selectedOption) {
-      const productWithOption = {
-        ...product,
-        price: selectedOption.price,
-        selectedOption: selectedOption
-      };
-      addToCart(productWithOption, quantity);
-    } else {
-      addToCart(product, quantity);
+    // Check if the product is variable and requires option selection
+    if (product.type === 'variable' && product.options && product.options.length > 0 && !selectedOption) {
+      toast.error('يجب اختيار أحد الخيارات المتاحة قبل الشراء', {
+        duration: 4000,
+        position: 'top-center',
+        style: {
+          background: '#EF4444',
+          color: '#fff',
+          borderRadius: '8px',
+          fontFamily: 'Arial, sans-serif'
+        },
+        icon: '⚠️',
+      });
+      return;
     }
-    
-    toast.success('جاري الانتقال إلى صفحة إتمام الطلب', {
-      duration: 2000,
-      position: 'top-center',
-      style: {
-        background: '#059669',
-        color: '#fff',
-        borderRadius: '8px',
-        fontFamily: 'Arial, sans-serif'
-      },
-      icon: '💳',
-    });
+
+    // Check if the product is already in cart
+    const currentOptionId = product.type === 'variable' && selectedOption ? selectedOption.option_id : null;
+    const alreadyInCart = isInCart(product.id, currentOptionId);
+
+    // Only add to cart if not already there
+    if (!alreadyInCart) {
+      // For variable products, use the selected option
+      if (product.type === 'variable' && selectedOption) {
+        const productWithOption = {
+          ...product,
+          price: selectedOption.price,
+          selectedOption: selectedOption
+        };
+        addToCart(productWithOption, quantity, selectedOption.option_id);
+      } else {
+        addToCart(product, quantity);
+      }
+      
+      toast.success('تم إضافة المنتج إلى السلة والانتقال لصفحة الدفع', {
+        duration: 2000,
+        position: 'top-center',
+        style: {
+          background: '#059669',
+          color: '#fff',
+          borderRadius: '8px',
+          fontFamily: 'Arial, sans-serif'
+        },
+        icon: '💳',
+      });
+    } else {
+      toast.success('المنتج موجود في السلة، جاري الانتقال إلى صفحة الدفع', {
+        duration: 2000,
+        position: 'top-center',
+        style: {
+          background: '#059669',
+          color: '#fff',
+          borderRadius: '8px',
+          fontFamily: 'Arial, sans-serif'
+        },
+        icon: '🛒',
+      });
+    }
     
     setTimeout(() => {
       navigate('/checkout');
@@ -191,8 +242,10 @@ const ProductDetail = () => {
     ? Math.round(((parseFloat(product.old_price) - parseFloat(currentPrice)) / parseFloat(product.old_price)) * 100)
     : 0;
 
-  const cartItem = getCartItem(product.id);
-  const inCart = isInCart(product.id);
+  // For variable products, check with selected option
+  const currentOptionId = product.type === 'variable' && selectedOption ? selectedOption.option_id : null;
+  const cartItem = getCartItem(product.id, currentOptionId);
+  const inCart = isInCart(product.id, currentOptionId);
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { fetchCategories, fetchProducts } from '../../services/api';
+import { fetchCategories, fetchProductsByCategory } from '../../services/api';
 import Loading from '../../components/Loading';
 import ProductGrid from '../../components/ProductGrid';
 
@@ -8,70 +8,49 @@ const CategoryPage = () => {
   const { slug } = useParams();
   const [category, setCategory] = useState(null);
   const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    const loadCategoryAndProducts = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Load categories and products in parallel
-        const [categoriesData, productsData] = await Promise.all([
-          fetchCategories(),
-          fetchProducts()
-        ]);
-        
-        // Find the current category by slug
-        const currentCategory = categoriesData.find(cat => cat.slug === slug);
-        
-        if (!currentCategory) {
-          setError('الصنف غير موجود');
-          return;
-        }
-        
-        setCategory(currentCategory);
-        setProducts(productsData);
-        
-        // Filter products by category (assuming products have category_id or categories field)
-        const categoryProducts = productsData.filter(product => {
-          // Check if product has category_id that matches
-          if (product.category_id === currentCategory.id) {
-            return true;
-          }
-          
-          // Check if product has categories array that includes this category
-          if (product.categories && Array.isArray(product.categories)) {
-            return product.categories.some(cat => 
-              cat.id === currentCategory.id || 
-              cat.slug === currentCategory.slug ||
-              cat.name === currentCategory.name
-            );
-          }
-          
-          // Check if product has category field that matches
-          if (product.category === currentCategory.name) {
-            return true;
-          }
-          
-          return false;
-        });
-        
-        setFilteredProducts(categoryProducts);
-        
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+    loadCategoryAndProducts(currentPage);
+  }, [slug, currentPage]);
 
-    if (slug) {
-      loadCategoryAndProducts();
+  const loadCategoryAndProducts = async (page = 1) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Load categories to get category info, and products by category in parallel
+      const [categoriesResult, productsResult] = await Promise.all([
+        fetchCategories(),
+        fetchProductsByCategory(slug, page, 12)
+      ]);
+      
+      // Find the current category by slug
+      const currentCategory = categoriesResult.data.find(cat => cat.slug === slug);
+      
+      if (!currentCategory) {
+        setError('الصنف غير موجود');
+        return;
+      }
+      
+      setCategory(currentCategory);
+      setProducts(productsResult.data);
+      setPagination(productsResult.pagination);
+      
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-  }, [slug]);
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (loading) {
     return <Loading />;
@@ -147,7 +126,7 @@ const CategoryPage = () => {
               {category.name}
             </h1>
             <p className="text-lg md:text-xl opacity-90 drop-shadow">
-              {filteredProducts.length} منتج متوفر
+              {pagination ? pagination.total : products.length} منتج متوفر
             </p>
           </div>
         </div>
@@ -174,7 +153,7 @@ const CategoryPage = () => {
 
       {/* Products Section */}
       <div className="container mx-auto px-4 pb-16">
-        {filteredProducts.length === 0 ? (
+        {products.length === 0 && !loading ? (
           <div className="text-center py-16">
             <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
               <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,7 +161,7 @@ const CategoryPage = () => {
               </svg>
             </div>
             <h3 className="text-xl font-medium text-gray-700 mb-2">لا توجد منتجات في هذا الصنف</h3>
-            <p className="text-gray-500 mb-6">لم يتم العثور على أي منتجات في صنف "{category.name}" حالياً</p>
+            <p className="text-gray-500 mb-6">لم يتم العثور على أي منتجات في صنف "{category?.name}" حالياً</p>
             <div className="space-x-4 rtl:space-x-reverse">
               <Link 
                 to="/categories"
@@ -203,10 +182,12 @@ const CategoryPage = () => {
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-                  منتجات {category.name}
+                  منتجات {category?.name}
                 </h2>
                 <p className="text-gray-600">
-                  تم العثور على {filteredProducts.length} منتج
+                  {pagination && (
+                    <>عرض {pagination.from} - {pagination.to} من {pagination.total} منتج</>
+                  )}
                 </p>
               </div>
               
@@ -221,13 +202,18 @@ const CategoryPage = () => {
               </Link>
             </div>
 
-            <ProductGrid products={filteredProducts} />
+            <ProductGrid 
+              products={products} 
+              loading={loading}
+              pagination={pagination}
+              onPageChange={handlePageChange}
+            />
           </>
         )}
       </div>
 
       {/* Related Categories */}
-      {filteredProducts.length > 0 && (
+      {products.length > 0 && (
         <div className="bg-white py-16">
           <div className="container mx-auto px-4">
             <div className="text-center mb-8">

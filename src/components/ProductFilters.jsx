@@ -1,44 +1,69 @@
 import React, { useState, useEffect } from 'react';
 
-const ProductFilters = ({ filters, onFilterChange, onClearFilters, categories, isMobile, isOpen, onClose }) => {
+const ProductFilters = ({ filters, onFilterChange, onClearFilters, categories, brands = [], isMobile, isOpen, onClose }) => {
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
 
-  // Initialize price range from filters
+  // Initialize price range from filters only on mount
   useEffect(() => {
-    setPriceRange({
-      min: filters.priceMin || '',
-      max: filters.priceMax || ''
-    });
-  }, [filters.priceMin, filters.priceMax]);
+    if (!priceRange.min && !priceRange.max) {
+      setPriceRange({
+        min: filters.priceMin || '',
+        max: filters.priceMax || ''
+      });
+    }
+  }, []); // Empty dependency array - run only once on mount
 
   const handleCategoryChange = (categoryName) => {
     const newCategories = filters.categories.includes(categoryName)
       ? filters.categories.filter(cat => cat !== categoryName)
       : [...filters.categories, categoryName];
     
-    onFilterChange({ ...filters, categories: newCategories });
+    onFilterChange({ ...filters, categories: newCategories, page: 1 });
+  };
+
+  const handleBrandChange = (brandName) => {
+    const currentBrands = filters.brands || [];
+    const newBrands = currentBrands.includes(brandName)
+      ? currentBrands.filter(brand => brand !== brandName)
+      : [...currentBrands, brandName];
+    
+    onFilterChange({ ...filters, brands: newBrands, page: 1 });
   };
 
   const handlePriceRangeChange = (field, value) => {
-    // Allow empty string and numeric values (including zeros)
-    const newPriceRange = { ...priceRange, [field]: value };
-    setPriceRange(newPriceRange);
-    
+    // Update local state only, no filter triggering
+    setPriceRange(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handlePriceSearch = () => {
+    // Apply price filter when search button is clicked
     onFilterChange({ 
       ...filters, 
-      priceMin: newPriceRange.min,
-      priceMax: newPriceRange.max
+      priceMin: priceRange.min,
+      priceMax: priceRange.max,
+      page: 1
     });
   };
 
   const handleSortChange = (sortBy) => {
-    onFilterChange({ ...filters, sortBy });
+    onFilterChange({ ...filters, sortBy, page: 1 });
   };
 
   const clearAllFilters = () => {
     setPriceRange({ min: '', max: '' });
     onClearFilters();
   };
+
+  // Reset price range when filters are cleared externally
+  useEffect(() => {
+    if (!filters.priceMin && !filters.priceMax && (priceRange.min || priceRange.max)) {
+      setPriceRange({ min: '', max: '' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.priceMin, filters.priceMax]);
 
   const FilterContent = () => (
     <div className="space-y-6">
@@ -47,9 +72,9 @@ const ProductFilters = ({ filters, onFilterChange, onClearFilters, categories, i
         <label className="block text-sm font-medium text-gray-700 mb-2">البحث</label>
         <input
           type="text"
-          placeholder="ابحث عن منتج..."
+          placeholder="ابحث عن منتج أو علامة تجارية..."
           value={filters.search || ''}
-          onChange={(e) => onFilterChange({ ...filters, search: e.target.value })}
+          onChange={(e) => onFilterChange({ ...filters, search: e.target.value, page: 1 })}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
         />
       </div>
@@ -80,33 +105,85 @@ const ProductFilters = ({ filters, onFilterChange, onClearFilters, categories, i
         )}
       </div>
 
+      {/* Brands */}
+      {brands.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">العلامات التجارية</label>
+          <div className="space-y-3 max-h-40 overflow-y-auto">
+            {brands.map((brandName, index) => (
+              <label key={index} className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors">
+                <input
+                  type="checkbox"
+                  checked={filters.brands?.includes(brandName) || false}
+                  onChange={() => handleBrandChange(brandName)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="mr-3 text-sm text-gray-700">{brandName}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Price Range */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-3">النطاق السعري (ل.س)</label>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <input
-              type="text"
-              placeholder="من"
-              value={priceRange.min}
-              onChange={(e) => handlePriceRangeChange('min', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
-            />
-            <span className="text-xs text-gray-500 mt-1 block">الحد الأدنى</span>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <input
+                type="tel"
+                placeholder="من"
+                value={priceRange.min}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^\d]/g, ''); // Only allow digits
+                  handlePriceRangeChange('min', value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handlePriceSearch();
+                  }
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
+              />
+              <span className="text-xs text-gray-500 mt-1 block">الحد الأدنى</span>
+            </div>
+            <div>
+              <input
+                type="tel"
+                placeholder="إلى"
+                value={priceRange.max}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^\d]/g, ''); // Only allow digits
+                  handlePriceRangeChange('max', value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handlePriceSearch();
+                  }
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
+              />
+              <span className="text-xs text-gray-500 mt-1 block">الحد الأعلى</span>
+            </div>
           </div>
-          <div>
-            <input
-              type="text"
-              placeholder="إلى"
-              value={priceRange.max}
-              onChange={(e) => handlePriceRangeChange('max', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors"
-            />
-            <span className="text-xs text-gray-500 mt-1 block">الحد الأعلى</span>
+          
+          {/* Price Search Button */}
+          <button
+            onClick={handlePriceSearch}
+            className="w-full px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            بحث بالنطاق السعري
+          </button>
+          
+          <div className="text-xs text-gray-500">
+            مثال: 50000 - 500000
           </div>
-        </div>
-        <div className="mt-2 text-xs text-gray-500">
-          مثال: 50000 - 500000
         </div>
       </div>
 
@@ -134,7 +211,7 @@ const ProductFilters = ({ filters, onFilterChange, onClearFilters, categories, i
           <input
             type="checkbox"
             checked={filters.featured || false}
-            onChange={(e) => onFilterChange({ ...filters, featured: e.target.checked })}
+            onChange={(e) => onFilterChange({ ...filters, featured: e.target.checked, page: 1 })}
             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
           />
           <span className="mr-3 text-sm text-gray-700">المنتجات المميزة فقط</span>

@@ -123,10 +123,20 @@ const Checkout = () => {
       setSubmitStatus('جاري تحضير البيانات...');
 
       // Prepare items for API
-      const apiItems = cartItems.map(item => ({
-        shop_product_id: item.id,
-        qty: item.quantity
-      }));
+      const apiItems = cartItems.map(item => {
+        const apiItem = {
+          shop_product_id: item.id,
+          qty: item.quantity,
+          unit_price: item.price
+        };
+        
+        // Add option_id if available
+        if (item.option_id) {
+          apiItem.option_id = item.option_id;
+        }
+        
+        return apiItem;
+      });
 
       // Prepare order data for API
       const orderData = {
@@ -325,29 +335,7 @@ const Checkout = () => {
 
                 {/* Address Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      المدينة *
-                    </label>
-                    <input
-                      type="text"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                        errors.city 
-                          ? 'border-red-500 focus:ring-red-500' 
-                          : 'border-gray-300 focus:ring-blue-500'
-                      }`}
-                      placeholder="أدخل اسم المدينة"
-                      required
-                    />
-                    {errors.city && (
-                      <p className="mt-1 text-sm text-red-600">{errors.city}</p>
-                    )}
-                  </div>
-
-                  <div>
+                <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       المحافظة *
                     </label>
@@ -371,6 +359,29 @@ const Checkout = () => {
                       <p className="mt-1 text-sm text-red-600">{errors.governorate}</p>
                     )}
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      المدينة *
+                    </label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                        errors.city 
+                          ? 'border-red-500 focus:ring-red-500' 
+                          : 'border-gray-300 focus:ring-blue-500'
+                      }`}
+                      placeholder="أدخل اسم المدينة"
+                      required
+                    />
+                    {errors.city && (
+                      <p className="mt-1 text-sm text-red-600">{errors.city}</p>
+                    )}
+                  </div>
+
+                  
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -468,11 +479,16 @@ const Checkout = () => {
                   <span>{formatPrice(getCartTotal())}</span>
                 </div>
                 
+                <div className="flex justify-between text-gray-600">
+                  <span>الضريبة (10%)</span>
+                  <span>{formatPrice(getCartTotal() * 0.1)}</span>
+                </div>
+                
                 <hr className="border-gray-200" />
                 
                 <div className="flex justify-between text-lg font-bold text-gray-900">
                   <span>المجموع الكلي</span>
-                  <span className="text-[#7C0000]">{formatPrice(getCartTotal())}</span>
+                  <span className="text-[#7C0000]">{formatPrice(getCartTotal() * 1.1)}</span>
                 </div>
               </div>
 

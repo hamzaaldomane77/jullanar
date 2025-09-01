@@ -5,26 +5,34 @@ import Loading from '../../components/Loading';
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
+  const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const categoriesData = await fetchCategories();
-        setCategories(categoriesData);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+    loadCategories(currentPage);
+  }, [currentPage]);
 
-    loadCategories();
-  }, []);
+  const loadCategories = async (page = 1) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const result = await fetchCategories(page, 12);
+      setCategories(result.data);
+      setPagination(result.pagination);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (loading) {
     return <Loading />;
@@ -105,7 +113,9 @@ const Categories = () => {
                 جميع الأصناف
               </h2>
               <p className="text-gray-600">
-                اكتشف مجموعتنا المتنوعة من المنتجات ({categories.length} صنف)
+                {pagination && (
+                  <>اكتشف مجموعتنا المتنوعة من المنتجات ({pagination.total} صنف)</>
+                )}
               </p>
             </div>
 
@@ -144,6 +154,41 @@ const Categories = () => {
                 </Link>
               ))}
             </div>
+
+            {/* Pagination */}
+            {pagination && pagination.last_page > 1 && (
+              <div className="flex items-center justify-center mt-12 space-x-1 rtl:space-x-reverse">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  السابق
+                </button>
+                
+                {Array.from({ length: pagination.last_page }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-3 py-2 text-sm font-medium border rounded-md ${
+                      page === currentPage
+                        ? 'text-white bg-red-600 border-red-600'
+                        : 'text-gray-500 bg-white border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === pagination.last_page}
+                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  التالي
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

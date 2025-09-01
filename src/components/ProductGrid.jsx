@@ -20,6 +20,23 @@ const ProductGrid = ({ products, loading, pagination, onPageChange }) => {
 
   const handleAddToCart = (e, product) => {
     e.stopPropagation();
+    
+    // Check if the product is variable and requires option selection
+    if (product.type === 'variable' && product.options && product.options.length > 0) {
+      toast.error('يجب فتح صفحة المنتج واختيار أحد الخيارات المتاحة قبل إضافة المنتج إلى السلة', {
+        duration: 4000,
+        position: 'top-center',
+        style: {
+          background: '#EF4444',
+          color: '#fff',
+          borderRadius: '8px',
+          fontFamily: 'Arial, sans-serif'
+        },
+        icon: '⚠️',
+      });
+      return;
+    }
+
     addToCart(product, 1);
     
     // Show success toast
@@ -76,12 +93,12 @@ const ProductGrid = ({ products, loading, pagination, onPageChange }) => {
   };
 
   const LoadingSkeleton = () => (
-    <div className="max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {[1, 2, 3, 4].map((item) => (
+    <div className="w-full">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        {[1, 2, 3, 4, 5, 6].map((item) => (
           <div key={item} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
             <div className="aspect-square bg-gray-200"></div>
-            <div className="p-6 space-y-3">
+            <div className="p-4 space-y-3">
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>
               <div className="h-3 bg-gray-200 rounded w-1/2"></div>
               <div className="h-4 bg-gray-200 rounded w-1/4"></div>
@@ -172,9 +189,9 @@ const ProductGrid = ({ products, loading, pagination, onPageChange }) => {
 
   return (
     <div>
-      {/* Products Grid - Centered with 2 products per row */}
-      <div className="max-w-4xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* Products Grid - 2 products per row on mobile, 3 on desktop */}
+      <div className="w-full">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {products.map((product) => {
             const cartItem = getCartItem(product.id);
             const inCart = isInCart(product.id);
@@ -211,33 +228,33 @@ const ProductGrid = ({ products, loading, pagination, onPageChange }) => {
                   )}
                 </div>
                 
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-3 line-clamp-2">
+                <div className="p-4">
+                  <h3 className="text-lg lg:text-xl font-semibold text-gray-800 mb-2 line-clamp-2">
                     {product.name}
                   </h3>
                   
                   {product.description && (
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                    <p className="text-xs lg:text-sm text-gray-600 mb-2 line-clamp-2">
                       {product.description}
                     </p>
                   )}
                   
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-gray-500 font-medium">{product.brand}</span>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs lg:text-sm text-gray-500 font-medium truncate">{product.brand}</span>
                     {product.categories && product.categories.length > 0 && (
-                      <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
                         {product.categories[0]}
                       </span>
                     )}
                   </div>
                   
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-3">
                     <div className="flex flex-col">
-                      <span className="text-xl font-bold text-[#7C0000]">
+                      <span className="text-lg lg:text-xl font-bold text-[#7C0000]">
                         {product.displayPrice || formatPrice(product.price)}
                       </span>
                       {product.old_price && product.old_price !== '0.00' && (
-                        <span className="text-sm text-gray-500 line-through">
+                        <span className="text-xs lg:text-sm text-gray-500 line-through">
                           {formatPrice(product.old_price)}
                         </span>
                       )}
@@ -245,7 +262,7 @@ const ProductGrid = ({ products, loading, pagination, onPageChange }) => {
                     
                     <button
                       onClick={(e) => handleAddToCart(e, product)}
-                      className={`px-4 py-2 text-white text-sm rounded-md transition-colors font-medium ${
+                      className={`w-full px-3 py-2 text-white text-xs lg:text-sm rounded-md transition-colors font-medium ${
                         inCart 
                           ? 'bg-green-600 hover:bg-green-700' 
                           : 'bg-blue-600 hover:bg-blue-700'

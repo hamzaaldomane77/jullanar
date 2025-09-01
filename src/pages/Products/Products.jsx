@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchProducts, getUniqueCategories, filterProducts, paginateProducts } from '../../services/api';
+import { fetchProducts, getUniqueCategories, getUniqueBrands, filterProducts, paginateProducts } from '../../services/api';
 import ProductFilters from '../../components/ProductFilters';
 import ProductGrid from '../../components/ProductGrid';
 
@@ -7,43 +7,68 @@ const Products = () => {
   const [allProducts, setAllProducts] = useState([]); // All products from API
   const [displayedProducts, setDisplayedProducts] = useState([]); // Filtered and paginated products
   const [categories, setCategories] = useState([]); // Available categories
+  const [brands, setBrands] = useState([]); // Available brands
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [pagination, setPagination] = useState(null);
+  const [hasActiveFilters, setHasActiveFilters] = useState(false);
   
   const [filters, setFilters] = useState({
     search: '',
     categories: [],
+    brands: [],
     priceMin: '',
     priceMax: '',
     sortBy: '',
     featured: false,
     page: 1,
-    perPage: 8
+    perPage: 12
   });
 
-  // Load products whenever page or perPage changes
+  // Check if there are active filters
   useEffect(() => {
-    loadProducts(filters.page, filters.perPage);
-  }, [filters.page, filters.perPage]);
+    const active = !!(
+      filters.search || 
+      filters.categories.length > 0 || 
+      filters.brands.length > 0 || 
+      filters.priceMin || 
+      filters.priceMax || 
+      filters.sortBy || 
+      filters.featured
+    );
+    setHasActiveFilters(active);
+  }, [filters.search, filters.categories, filters.brands, filters.priceMin, filters.priceMax, filters.sortBy, filters.featured]);
 
-  // Apply filters whenever other filter options change (not page/perPage)
+  // Load products when page/perPage changes OR when filters change
   useEffect(() => {
-    if (allProducts.data && allProducts.data.length > 0) {
+    if (hasActiveFilters) {
+      // If filters are active, load all products and filter locally
+      loadAllProductsAndFilter();
+    } else {
+      // If no filters, use API pagination
+      loadProducts(filters.page, filters.perPage);
+    }
+  }, [filters.page, filters.perPage, hasActiveFilters]);
+
+  // Apply filters when filter values change
+  useEffect(() => {
+    if (hasActiveFilters && allProducts.data && allProducts.data.length > 0) {
       applyFiltersAndPagination();
     }
   }, [
     allProducts, 
     filters.search, 
     filters.categories, 
+    filters.brands,
     filters.priceMin, 
     filters.priceMax, 
     filters.sortBy, 
-    filters.featured
+    filters.featured,
+    hasActiveFilters
   ]);
 
-  const loadProducts = async (page = 1, perPage = 8) => {
+  const loadProducts = async (page = 1, perPage = 12) => {
     try {
       setLoading(true);
       setError(null);
@@ -52,13 +77,52 @@ const Products = () => {
       
       setAllProducts(result);
       
-      // Extract unique categories
-      const uniqueCategories = getUniqueCategories(result.data);
-      setCategories(uniqueCategories);
+      // Extract unique categories only once when loading first page
+      if (page === 1) {
+        // Load all categories for filters by getting a larger set
+        try {
+          const allProductsResult = await fetchProducts(1, 1000);
+          const uniqueCategories = getUniqueCategories(allProductsResult.data);
+          const uniqueBrands = getUniqueBrands(allProductsResult.data);
+          setCategories(uniqueCategories);
+          setBrands(uniqueBrands);
+        } catch (catError) {
+          // Fallback to current page categories and brands
+          const uniqueCategories = getUniqueCategories(result.data);
+          const uniqueBrands = getUniqueBrands(result.data);
+          setCategories(uniqueCategories);
+          setBrands(uniqueBrands);
+        }
+      }
       
       // Set displayed products and pagination directly from API result
       setDisplayedProducts(result.data);
       setPagination(result.pagination);
+      
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAllProductsAndFilter = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Load all products for filtering
+      const result = await fetchProducts(1, 1000); // Get a large number to get most products
+      
+      setAllProducts(result);
+      
+      // Extract unique categories and brands
+      const uniqueCategories = getUniqueCategories(result.data);
+      const uniqueBrands = getUniqueBrands(result.data);
+      setCategories(uniqueCategories);
+      setBrands(uniqueBrands);
+      
+      // Filters will be applied in the useEffect that watches for changes
       
     } catch (err) {
       setError(err.message);
@@ -74,13 +138,10 @@ const Products = () => {
     const filteredProducts = filterProducts(allProducts.data, filters);
     
     // Paginate filtered products (local pagination when filters are applied)
-    const paginatedResult = paginateProducts(filteredProducts, 1, filters.perPage);
+    const paginatedResult = paginateProducts(filteredProducts, filters.page, filters.perPage);
     
     setDisplayedProducts(paginatedResult.data);
-    setPagination({
-      ...paginatedResult.pagination,
-      current_page: 1 // Reset to first page when filters change
-    });
+    setPagination(paginatedResult.pagination);
   };
 
   const handleFilterChange = (newFilters) => {
@@ -91,12 +152,13 @@ const Products = () => {
     setFilters({
       search: '',
       categories: [],
+      brands: [],
       priceMin: '',
       priceMax: '',
       sortBy: '',
       featured: false,
       page: 1,
-      perPage: 8
+      perPage: 12
     });
   };
 
@@ -156,6 +218,7 @@ const Products = () => {
               onFilterChange={handleFilterChange}
               onClearFilters={handleClearFilters}
               categories={categories}
+              brands={brands}
               isMobile={false}
               isOpen={filterOpen}
               onClose={() => setFilterOpen(false)}
@@ -182,9 +245,7 @@ const Products = () => {
                   onChange={(e) => setFilters({ ...filters, perPage: parseInt(e.target.value), page: 1 })}
                   className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value={8}>8</option>
                   <option value={12}>12</option>
-                  <option value={16}>16</option>
                   <option value={24}>24</option>
                 </select>
               </div>
@@ -204,7 +265,7 @@ const Products = () => {
                 </div>
                 <div className="mt-3">
                   <button
-                    onClick={loadProducts}
+                    onClick={() => hasActiveFilters ? loadAllProductsAndFilter() : loadProducts()}
                     className="px-3 py-1 bg-red-100 text-red-800 text-sm rounded hover:bg-red-200"
                   >
                     إعادة المحاولة
@@ -229,6 +290,7 @@ const Products = () => {
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
           categories={categories}
+          brands={brands}
           isMobile={true}
           isOpen={filterOpen}
           onClose={() => setFilterOpen(false)}

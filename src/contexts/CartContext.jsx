@@ -23,11 +23,11 @@ const cartReducer = (state, action) => {
 
     case CART_ACTIONS.ADD_ITEM:
       const existingItemIndex = state.items.findIndex(
-        item => item.id === action.payload.id
+        item => item.id === action.payload.id && item.option_id === action.payload.option_id
       );
 
       if (existingItemIndex >= 0) {
-        // Item exists, update quantity
+        // Item exists with same option, update quantity
         const updatedItems = state.items.map((item, index) =>
           index === existingItemIndex
             ? { ...item, quantity: item.quantity + action.payload.quantity }
@@ -38,7 +38,7 @@ const cartReducer = (state, action) => {
           items: updatedItems
         };
       } else {
-        // New item, add to cart
+        // New item or different option, add to cart
         return {
           ...state,
           items: [...state.items, action.payload]
@@ -100,7 +100,7 @@ export const CartProvider = ({ children }) => {
   }, [state.items]);
 
   // Cart Actions
-  const addToCart = (product, quantity = 1) => {
+  const addToCart = (product, quantity = 1, option_id = null) => {
     const cartItem = {
       id: product.id,
       name: product.name,
@@ -110,7 +110,8 @@ export const CartProvider = ({ children }) => {
       brand: product.brand,
       categories: product.categories,
       slug: product.slug,
-      quantity: quantity
+      quantity: quantity,
+      option_id: option_id  // Add option_id support
     };
 
     dispatch({ type: CART_ACTIONS.ADD_ITEM, payload: cartItem });
@@ -141,12 +142,12 @@ export const CartProvider = ({ children }) => {
     return getCartTotal();
   };
 
-  const isInCart = (productId) => {
-    return state.items.some(item => item.id === productId);
+  const isInCart = (productId, option_id = null) => {
+    return state.items.some(item => item.id === productId && item.option_id === option_id);
   };
 
-  const getCartItem = (productId) => {
-    return state.items.find(item => item.id === productId);
+  const getCartItem = (productId, option_id = null) => {
+    return state.items.find(item => item.id === productId && item.option_id === option_id);
   };
 
   // Format price in Syrian Pounds
